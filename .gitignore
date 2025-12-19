@@ -1,0 +1,32 @@
+# R and RStudio files
+.Rhistory
+.RData
+.Rproj.user
+*.Rproj.user
+
+# Compiled object files
+*.o
+*.so
+*.dll
+
+# Package archives
+*.tar.gz
+*.zip
+
+# Documentation
+inst/doc
+doc
+Meta
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# Build artifacts
+src/*.o
+src/*.so
+src/*.dll
+src-i386
+src-x64

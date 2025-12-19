@@ -1,0 +1,48 @@
+Package: BioTransition
+Type: Package
+Title: Detect Critical Transitions in Biological Systems
+Version: 2.0.0
+Authors@R: c(
+    person("Zaoqu", "Liu", 
+        email = "liuzaoqu@163.com",
+        role = c("aut", "cre")),
+    person("Chuhan", "Zhang",
+        role = "ctb",
+        comment = "MDNB implementation"))
+Maintainer: Zaoqu Liu <liuzaoqu@163.com>
+Description: Identifies critical transition points and biomarker genes during 
+    biological state transitions using Dynamic Network Biomarker (DNB) theory. 
+    Implements seven state-of-the-art methods: conventional DNB (cDNB; Chen et al., 
+    2012), topological DNB (tDNB), landscape DNB (LDNB; Liu et al., 2019), local 
+    DNB (LcDNB), module-based DNB (MDNB; Li et al., 2022), time-series network 
+    module biomarker (TSNMB; Zhong et al., 2022), and time-series leading edge 
+    (TSLE; Liu et al., 2020). Optimized with C++ for computational efficiency. 
+    Supports bulk RNA-seq, single-cell RNA-seq, and spatial transcriptomics data. 
+    Includes curated human and mouse protein-protein interaction networks from 
+    STRING database.
+License: GPL (>= 3)
+URL: https://github.com/SolvingLab/BioTransition
+BugReports: https://github.com/SolvingLab/BioTransition/issues
+Encoding: UTF-8
+ByteCompile: true
+LazyData: true
+Depends: R (>= 4.0.0)
+Imports: 
+    future (>= 1.21.0),
+    furrr,
+    magrittr,
+    purrr (>= 1.0.0),
+    dplyr (>= 1.0.0),
+    stats,
+    parallel,
+    WGCNA,
+    igraph,
+    Rcpp (>= 1.0.0)
+LinkingTo: Rcpp
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
+RoxygenNote: 7.3.3
+Roxygen: list(markdown = TRUE)

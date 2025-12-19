@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.gitignore$
+^\.Rhistory$
+^\.RData$
+^README\.Rmd$
+^README\.md$
+^LICENSE\.md$
+^\.travis\.yml$
+^\.github$
+^cran-comments\.md$
+^revdep$
