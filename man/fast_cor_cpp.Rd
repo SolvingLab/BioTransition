@@ -18,4 +18,3 @@ Correlation matrix (genes x genes)
 Optimized C++ implementation for computing correlation matrices.
 This provides 10-20x speedup over R's cor() for large matrices.
 }
-\keyword{internal}

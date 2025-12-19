@@ -11,7 +11,7 @@
 #' @param method Correlation method: "pearson" or "spearman"
 #' @return Correlation matrix (genes x genes)
 #' 
-#' @keywords internal
+#' @export
 fast_cor_cpp <- function(mat, method = "pearson") {
     .Call('_BioTransition_fast_cor_cpp', PACKAGE = 'BioTransition', mat, method)
 }
@@ -28,7 +28,7 @@ fast_cor_cpp <- function(mat, method = "pearson") {
 #' @param add_size Whether to include module size in score
 #' @return List with CI, V_in, R_in, R_out
 #' 
-#' @keywords internal
+#' @export
 fast_module_score_cpp <- function(cor_matrix, variation, module_genes, all_genes, add_size = FALSE) {
     .Call('_BioTransition_fast_module_score_cpp', PACKAGE = 'BioTransition', cor_matrix, variation, module_genes, all_genes, add_size)
 }
@@ -43,7 +43,7 @@ fast_module_score_cpp <- function(cor_matrix, variation, module_genes, all_genes
 #' @param method Correlation method: "pearson"
 #' @return List with r (correlation matrix), p (p-values), n_obs (number of observations)
 #' 
-#' @keywords internal
+#' @export
 fast_cor_pval_cpp <- function(mat, method = "pearson") {
     .Call('_BioTransition_fast_cor_pval_cpp', PACKAGE = 'BioTransition', mat, method)
 }
@@ -62,7 +62,7 @@ fast_cor_pval_cpp <- function(mat, method = "pearson") {
 #' @param gene_names Gene names in expression matrix
 #' @return List of perturbation data frames for each case sample
 #' 
-#' @keywords internal
+#' @export
 fast_sspn_batch <- function(expr_mat, ref_indices, case_indices, ppi_gene1, ppi_gene2, gene_names) {
     .Call('_BioTransition_fast_sspn_batch', PACKAGE = 'BioTransition', expr_mat, ref_indices, case_indices, ppi_gene1, ppi_gene2, gene_names)
 }
@@ -75,7 +75,7 @@ fast_sspn_batch <- function(expr_mat, ref_indices, case_indices, ppi_gene1, ppi_
 #' @param p_values Vector of p-values
 #' @return Vector of adjusted p-values
 #' 
-#' @keywords internal
+#' @export
 fast_bh_adjust <- function(p_values) {
     .Call('_BioTransition_fast_bh_adjust', PACKAGE = 'BioTransition', p_values)
 }

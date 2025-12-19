@@ -115,17 +115,12 @@ MDNB <- function(
 
   cat("+++ Computing pairwise PCC for all gene pairs within groups...\n")
   
-  # Check if C++ acceleration is available (REQUIRED!)
-  has_cpp <- exists("fast_cor_cpp", where = asNamespace("EasyDNB"), mode = "function")
+  # Check C++ availability
+  has_cpp <- exists("fast_cor_cpp", where = asNamespace("BioTransition"), mode = "function")
   
   if (!has_cpp) {
-    stop("C++ acceleration not available! Please reinstall EasyDNB with:\n",
-         "  cd /Users/liuzaoqu/Desktop/develop/EasyDNB\n",
-         "  R CMD INSTALL .",
-         call. = FALSE)
+    stop("C++ functions not found. Please reinstall BioTransition package.", call. = FALSE)
   }
-  
-  cat("    ✓ C++ acceleration ACTIVE (10-20x faster)\n")
   
   allpcc <- list()
   total_groups <- nrow(state_idx)

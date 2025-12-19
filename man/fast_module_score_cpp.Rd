@@ -29,4 +29,3 @@ List with CI, V_in, R_in, R_out
 \description{
 Optimized calculation of DNB module scores.
 }
-\keyword{internal}

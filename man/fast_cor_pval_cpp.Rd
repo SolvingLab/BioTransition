@@ -18,4 +18,3 @@ List with r (correlation matrix), p (p-values), n_obs (number of observations)
 Optimized C++ implementation for computing correlation matrix with p-values.
 This replaces the slow CorandPval() function in SSPN calculations.
 }
-\keyword{internal}
