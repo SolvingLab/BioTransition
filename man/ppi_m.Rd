@@ -60,7 +60,7 @@ head(ppi_m)
 
 # Check gene coverage
 all_genes <- unique(c(ppi_m$G1, ppi_m$G2))
-length(all_genes)  # 21,645 genes
+length(all_genes) # 21,645 genes
 
 # Filter by confidence
 high_conf <- ppi_m[ppi_m$combined_score >= 700, ]

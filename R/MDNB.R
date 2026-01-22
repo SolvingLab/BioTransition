@@ -114,14 +114,14 @@ MDNB <- function(
   # ============================================================================
 
   cat("+++ Computing pairwise PCC for all gene pairs within groups...\n")
-  
+
   # Check C++ availability
   has_cpp <- exists("fast_cor_cpp", where = asNamespace("BioTransition"), mode = "function")
-  
+
   if (!has_cpp) {
     stop("C++ functions not found. Please reinstall BioTransition package.", call. = FALSE)
   }
-  
+
   allpcc <- list()
   total_groups <- nrow(state_idx)
   pb <- txtProgressBar(min = 0, max = total_groups, style = 3, width = 50)

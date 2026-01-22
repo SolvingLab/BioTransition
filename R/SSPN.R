@@ -25,11 +25,11 @@ SSPN1 <- function(
 
   cat("+++ Performing sample-specific perturbation network analysis...\n")
   cat("\n")
-  
+
   # Auto-detect C++ availability (silently)
-  use_cpp <- cor.method == "pearson" && 
-             exists("fast_sspn_batch") && 
-             is.function(fast_sspn_batch)
+  use_cpp <- cor.method == "pearson" &&
+    exists("fast_sspn_batch") &&
+    is.function(fast_sspn_batch)
   if (is.numeric(ref.samples)) {
     case.samples <- colnames(expr)[-ref.samples]
   } else {
@@ -47,9 +47,9 @@ SSPN1 <- function(
 
   cat("+++ Calculating background network using reference samples...\n")
   cat("\n")
-  
+
   refExpr <- expr[, ref.samples]
-  
+
   if (use_cpp) {
     ref_cor_result <- fast_cor_pval_cpp(t(as.matrix(refExpr)), method = "pearson")
     refCor <- ref_cor_result$r
@@ -60,24 +60,24 @@ SSPN1 <- function(
       p.adjust.method = p.adjust.method
     ))$r
   }
-  
+
   ppi3$refCor <- sapply(1:nrow(ppi3), function(i) refCor[ppi3$V1[i], ppi3$V2[i]])
 
   cat("+++ Calculating sample-specific perturbation network for each case sample...\n")
   cat("\n")
-  
+
   if (use_cpp) {
     # C++ batch processing
-    
+
     # Convert to 0-based indices
     case_indices_0based <- match(case.samples, colnames(expr)) - 1
     ref_indices_0based <- match(ref.samples, colnames(expr)) - 1
-    
+
     # Map PPI genes to indices
     gene_to_idx <- setNames(0:(nrow(expr) - 1), rownames(expr))
     ppi_idx1 <- gene_to_idx[as.character(ppi3$V1)]
     ppi_idx2 <- gene_to_idx[as.character(ppi3$V2)]
-    
+
     # Batch calculation
     cpp_results <- fast_sspn_batch(
       expr_mat = as.matrix(expr),
@@ -87,26 +87,25 @@ SSPN1 <- function(
       ppi_gene2 = as.character(ppi3$V2),
       gene_names = rownames(expr)
     )
-    
+
     # Adjust p-values for each sample
     caseSSPN.list <- lapply(1:length(case.samples), function(i) {
       df <- as.data.frame(cpp_results[[i]])
-      
+
       # Adjust p-values
       if (p.adjust.method == "BH") {
         df$caseFDR <- fast_bh_adjust(df$caseP)
       } else {
         df$caseFDR <- p.adjust(df$caseP, method = p.adjust.method)
       }
-      
+
       # Add gene names
       df$V1 <- ppi3$V1
       df$V2 <- ppi3$V2
-      
+
       return(df[, c("V1", "V2", "corPert", "caseZ", "caseP", "caseFDR")])
     })
     names(caseSSPN.list) <- case.samples
-    
   } else {
     # R version with parallel processing
     tmp_fun <- function(id) {
@@ -122,7 +121,7 @@ SSPN1 <- function(
       caseFDR <- stats::p.adjust(caseP, p.adjust.method)
       return(data.frame(V1 = ppi3$V1, V2 = ppi3$V2, corPert = casePert, caseZ = caseZ, caseP = caseP, caseFDR = caseFDR))
     }
-    
+
     plan(multisession, workers = nCores)
     caseSSPN.list <- furrr::future_map(case.samples, ~ tmp_fun(.x), .progress = TRUE)
     names(caseSSPN.list) <- case.samples
@@ -174,11 +173,11 @@ SSPN2 <- function(
 
   cat("+++ Performing sample-specific perturbation network analysis...\n")
   cat("\n")
-  
+
   # Auto-detect C++ availability (silently)
-  use_cpp <- cor.method == "pearson" && 
-             exists("fast_sspn_batch") && 
-             is.function(fast_sspn_batch)
+  use_cpp <- cor.method == "pearson" &&
+    exists("fast_sspn_batch") &&
+    is.function(fast_sspn_batch)
   if (is.numeric(ref.samples)) {
     case.samples <- colnames(expr)[-ref.samples]
   } else {
@@ -199,7 +198,7 @@ SSPN2 <- function(
   cat("\n")
 
   refExpr <- expr[, ref.samples]
-  
+
   if (use_cpp) {
     ref_cor_result <- fast_cor_pval_cpp(t(as.matrix(refExpr)), method = "pearson")
     refCor <- ref_cor_result$r
@@ -210,24 +209,24 @@ SSPN2 <- function(
       p.adjust.method = p.adjust.method
     ))$r
   }
-  
+
   net3$refCor <- sapply(1:nrow(net3), function(i) refCor[net3$G1[i], net3$G2[i]])
 
   cat("+++ Calculating sample-specific perturbation network for each case sample...\n")
   cat("\n")
-  
+
   if (use_cpp) {
     # C++ batch processing
-    
+
     # Convert to 0-based indices
     case_indices_0based <- match(case.samples, colnames(expr)) - 1
     ref_indices_0based <- match(ref.samples, colnames(expr)) - 1
-    
+
     # Map PPI genes to indices (0-based)
     gene_to_idx <- setNames(0:(nrow(expr) - 1), rownames(expr))
     ppi_idx1 <- gene_to_idx[as.character(net3$G1)]
     ppi_idx2 <- gene_to_idx[as.character(net3$G2)]
-    
+
     # Batch calculation
     cpp_results <- fast_sspn_batch(
       expr_mat = as.matrix(expr),
@@ -237,26 +236,25 @@ SSPN2 <- function(
       ppi_gene2 = as.character(net3$G2),
       gene_names = rownames(expr)
     )
-    
+
     # Adjust p-values for each sample
     caseSSPN.list <- lapply(1:length(case.samples), function(i) {
       df <- as.data.frame(cpp_results[[i]])
-      
+
       # Adjust p-values
       if (p.adjust.method == "BH") {
         df$caseFDR <- fast_bh_adjust(df$caseP)
       } else {
         df$caseFDR <- p.adjust(df$caseP, method = p.adjust.method)
       }
-      
+
       # Add gene names
       df$G1 <- net3$G1
       df$G2 <- net3$G2
-      
+
       return(df[, c("G1", "G2", "corPert", "caseZ", "caseP", "caseFDR")])
     })
     names(caseSSPN.list) <- case.samples
-    
   } else {
     tmp_fun <- function(id) {
       caseExpr <- cbind(refExpr, case = expr[, id])
@@ -271,7 +269,7 @@ SSPN2 <- function(
       caseFDR <- stats::p.adjust(caseP, p.adjust.method)
       return(data.frame(G1 = net3$G1, G2 = net3$G2, corPert = casePert, caseZ = caseZ, caseP = caseP, caseFDR = caseFDR))
     }
-    
+
     plan(multisession, workers = nCores)
     caseSSPN.list <- furrr::future_map(case.samples, ~ tmp_fun(.x), .progress = TRUE)
     names(caseSSPN.list) <- case.samples
