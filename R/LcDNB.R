@@ -1,114 +1,33 @@
-#' @title Local Conventional DNB Analysis
+#' Local Conventional DNB Analysis
 #'
-#' @description
 #' Performs local conventional dynamic network biomarker (LcDNB) analysis using
-#' protein-protein interaction (PPI) networks. This method extends the
-#' conventional DNB approach by incorporating network topology information.
+#' protein-protein interaction (PPI) networks.
 #'
-#' @param expr A numeric matrix or data.frame with genes in rows and samples in
-#'   columns. Row names should be gene symbols.
-#' @param state A data.frame with exactly two columns: sample identifiers
-#'   (matching column names in \code{expr}) and state/group labels.
-#' @param state.levels A character vector specifying the order of states for
-#'   analysis (e.g., time points or disease stages).
-#' @param cor.method Character string specifying correlation method. One of
-#'   \code{"pearson"} (default), \code{"spearman"}, or \code{"kendall"}.
-#' @param p.adjust.method Character string specifying p-value adjustment
-#'   method. One of \code{"BH"} (default), \code{"bonferroni"}, \code{"holm"},
-#'   \code{"hochberg"}, \code{"hommel"}, \code{"BY"}, \code{"fdr"}, or
-#'   \code{"none"}.
-#' @param variation.method Character string specifying the method for
-#'   calculating gene variation: \code{"sd"} (standard deviation, default) or
-#'   \code{"cv"} (coefficient of variation).
-#' @param min.first.neighbor.size Integer. Minimum number of first-order
-#'   neighbors required for a gene to be considered as a center gene.
-#'   Default: 3.
-#' @param min.second.neighbor.size Integer. Minimum number of second-order
-#'   neighbors required. Default: 1.
-#' @param ppi A data.frame containing protein-protein interactions. Must have
-#'   columns \code{G1}, \code{G2}, and \code{combined_score}. Default uses
-#'   built-in human PPI network.
-#' @param min.combined.score Numeric. Minimum STRING combined score for
-#'   filtering PPI interactions. Default: 900 (high confidence).
-#' @param percent Logical. If \code{TRUE} (default), use \code{top.p}
-#'   percentage; if \code{FALSE}, use \code{top.n} absolute number.
-#' @param top.n Integer. Number of top DNB genes when \code{percent = FALSE}.
-#'   Default: 30.
-#' @param top.p Numeric. Proportion of top DNB genes when \code{percent = TRUE}.
-#'   Default: 0.05 (5\%).
-#' @param AddModuleSize Logical. Whether to weight DNB score by module size.
-#'   Default: \code{FALSE}.
+#' @param expr A numeric matrix with genes in rows and samples in columns.
+#' @param state A data.frame with sample IDs and state labels (2 columns).
+#' @param state.levels Character vector specifying the order of states.
+#' @param cor.method Correlation method: "pearson", "spearman", or "kendall".
+#' @param p.adjust.method P-value adjustment method. Default: "BH".
+#' @param variation.method Method for variation: "sd" or "cv". Default: "sd".
+#' @param min.first.neighbor.size Minimum first-order neighbors. Default: 3.
+#' @param min.second.neighbor.size Minimum second-order neighbors. Default: 1.
+#' @param ppi PPI network data.frame with G1, G2, combined_score columns.
+#' @param min.combined.score Minimum STRING score. Default: 900.
+#' @param percent Use percentage (TRUE) or absolute number (FALSE).
+#' @param top.n Number of top genes when percent=FALSE. Default: 30.
+#' @param top.p Proportion when percent=TRUE. Default: 0.05.
+#' @param AddModuleSize Weight by module size. Default: FALSE.
 #'
-#' @return A list with the following components:
-#' \describe{
-#'   \item{DNB.score}{A data.frame with states and their DNB scores}
-#'   \item{DNB.genes}{Character vector of identified DNB genes}
-#'   \item{CI_all}{List of data.frames with CI scores for all center genes in
-#'     each state}
-#'   \item{Gene_module}{List of first-order neighbor genes for each center gene}
-#'   \item{Candidate}{Data.frame summarizing candidate information per state}
-#'   \item{Cor}{List of correlation matrices for each state}
-#'   \item{V}{List of gene variation values for each state}
-#'   \item{PPI.used}{Filtered PPI network used in analysis}
-#'   \item{first.order.genes}{List of first-order neighbors}
-#'   \item{second.order.genes}{List of second-order neighbors}
-#' }
+#' @return A list containing DNB.score, DNB.genes, CI_all, Gene_module,
+#'   Candidate, Cor, V, PPI.used, first.order.genes, second.order.genes.
 #'
-#' @details
-#' LcDNB analysis identifies critical transitions by combining gene expression
-#' dynamics with PPI network topology. The algorithm:
-#' \enumerate{
-#'   \item Filters PPI network based on genes present in expression data
-#'   \item Identifies center genes with sufficient network connections
-#'   \item Calculates composite index (CI) using local network modules
-#'   \item Identifies the critical state and DNB genes
-#' }
+#' @author Zaoqu Liu
 #'
-#' The composite index (CI) is calculated as:
-#' CI = (SD_in * |PCC_in|) / |PCC_out|
-#'
-#' where SD_in is the mean standard deviation of module genes,
-#' PCC_in is the mean correlation within the module, and
-#' PCC_out is the mean correlation with external genes.
-#'
-#' @author Zaoqu Liu \email{liuzaoqu@@163.com}
-#'
-#' @seealso
-#' \code{\link{cDNB}} for conventional DNB without PPI,
-#' \code{\link{LDNB}} for landscape DNB,
-#' \code{\link{ppi_h}} for human PPI network,
-#' \code{\link{ppi_m}} for mouse PPI network
+#' @seealso \code{\link{cDNB}}, \code{\link{LDNB}}, \code{\link{ppi_h}}
 #'
 #' @examples
-#' # Create example data
-#' set.seed(42)
-#' n_genes <- 200
-#' n_samples <- 15
-#'
-#' expr <- matrix(
-#'   rnorm(n_genes * n_samples, mean = 10, sd = 2),
-#'   nrow = n_genes, ncol = n_samples
-#' )
-#' # Use gene names that exist in PPI network
-#' data(ppi_h)
-#' gene_names <- unique(c(ppi_h$G1, ppi_h$G2))[seq_len(n_genes)]
-#' rownames(expr) <- gene_names
-#' colnames(expr) <- paste0("Sample", seq_len(n_samples))
-#'
-#' state <- data.frame(
-#'   sample_id = colnames(expr),
-#'   state = rep(c("Normal", "Pre", "Disease"), each = 5)
-#' )
-#'
 #' \donttest{
-#' result <- LcDNB(
-#'   expr = expr,
-#'   state = state,
-#'   state.levels = c("Normal", "Pre", "Disease"),
-#'   min.combined.score = 400
-#' )
-#' result$DNB.score
-#' head(result$DNB.genes)
+#' # See vignette for detailed examples
 #' }
 #'
 #' @export
@@ -129,8 +48,12 @@ LcDNB <- function(
     AddModuleSize = FALSE) {
 
     ## Input validation
-    .validate_expr(expr)
-    .validate_state(state, colnames(expr))
+    if (!is.matrix(expr) && !is.data.frame(expr)) {
+        stop("'expr' must be a matrix or data.frame", call. = FALSE)
+    }
+    if (ncol(state) != 2) {
+        stop("'state' must have exactly 2 columns", call. = FALSE)
+    }
 
     message("LcDNB: Local Conventional DNB Analysis")
     message("--------------------------------------")
@@ -205,7 +128,6 @@ LcDNB <- function(
             cor_out <- mean(correlation[genes_in, genes_out], na.rm = TRUE)
             v_in <- mean(v[genes_in], na.rm = TRUE)
 
-            ## Handle edge cases
             if (is.na(cor_out) || abs(cor_out) < 1e-10) cor_out <- 1e-10
 
             score <- if (AddModuleSize) {
@@ -239,8 +161,7 @@ LcDNB <- function(
         ceiling(length(ppil) * top.p)
     } else {
         if (top.n > length(ppil)) {
-            stop("top.n (", top.n, ") exceeds number of center genes (",
-                 length(ppil), ")")
+            stop("top.n exceeds number of center genes")
         }
         top.n
     }
@@ -269,7 +190,6 @@ LcDNB <- function(
         }, numeric(1))
     )
 
-    ## Report results
     message(sprintf("Critical state: %s", Candidate$State[critical_idx]))
     message(sprintf("DNB genes identified: %d", length(DNB.genes)))
     message("Done!")
@@ -286,30 +206,4 @@ LcDNB <- function(
         first.order.genes = ppil,
         second.order.genes = second_details
     )
-}
-
-## Internal validation functions
-.validate_expr <- function(expr) {
-    if (!is.matrix(expr) && !is.data.frame(expr)) {
-        stop("'expr' must be a matrix or data.frame", call. = FALSE)
-    }
-    if (is.null(rownames(expr))) {
-        stop("'expr' must have row names (gene symbols)", call. = FALSE)
-    }
-    if (is.null(colnames(expr))) {
-        stop("'expr' must have column names (sample IDs)", call. = FALSE)
-    }
-}
-
-.validate_state <- function(state, sample_ids) {
-    if (ncol(state) != 2) {
-        stop("'state' must have exactly 2 columns: sample ID and state",
-             call. = FALSE)
-    }
-    if (!all(state[[1]] %in% sample_ids)) {
-        missing <- setdiff(state[[1]], sample_ids)
-        stop("Some samples in 'state' not found in 'expr': ",
-             paste(head(missing, 3), collapse = ", "),
-             if (length(missing) > 3) "...", call. = FALSE)
-    }
 }

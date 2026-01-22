@@ -1,6 +1,6 @@
 Package: BioTransition
 Type: Package
-Title: Dynamic Network Biomarker Analysis for Critical Transition Detection
+Title: Dynamic Network Biomarker Analysis for Critical Transitions
 Version: 2.0.0
 Date: 2026-01-23
 Authors@R: c(
@@ -34,7 +34,7 @@ Description: A comprehensive toolkit for detecting critical transitions and
     optimal performance. Compatible with bulk RNA-seq, single-cell RNA-seq,
     and spatial transcriptomics data. Includes curated protein-protein
     interaction networks for human and mouse from the STRING database.
-License: GPL (>= 3)
+License: GPL (>= 3) + file LICENSE
 URL: https://github.com/SolvingLab/BioTransition,
     https://zaoqu-liu.r-universe.dev/BioTransition
 BugReports: https://github.com/SolvingLab/BioTransition/issues
@@ -66,7 +66,6 @@ Imports:
     parallel,
     WGCNA,
     dendextend,
-    igraph,
     ggplot2,
     Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
