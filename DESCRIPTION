@@ -50,6 +50,7 @@ biocViews:
 Encoding: UTF-8
 ByteCompile: true
 LazyData: true
+LazyDataCompression: xz
 Depends: R (>= 4.4.0)
 Imports: 
     methods,
@@ -64,6 +65,7 @@ Imports:
     WGCNA,
     dendextend,
     igraph,
+    ggplot2,
     Rcpp (>= 1.0.0)
 LinkingTo: Rcpp
 Suggests:

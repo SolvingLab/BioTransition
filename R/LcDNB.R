@@ -176,7 +176,7 @@ LcDNB <- function(
     DNB.score$DNB.score == 0]
   if (length(invalid_states) > 0) {
     cat("\n")
-    cat("⚠️  WARNING: The following states have invalid or zero DNB scores:\n")
+    cat("[WARNING]: The following states have invalid or zero DNB scores:\n")
     cat(paste0("   ", paste(invalid_states, collapse = ", "), "\n"))
     cat("   Possible reasons:\n")
     cat("   - Insufficient samples in these states\n")

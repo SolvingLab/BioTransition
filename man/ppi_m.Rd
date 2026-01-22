@@ -84,6 +84,6 @@ networks and functional enrichment analyses for any sequenced genome of interest
 Nucleic Acids Res. 2023;51(D1):D638-D646.
 }
 \seealso{
-\code{\link{ppi_h}} for human PPI network
+\code{ppi_h} for human PPI network
 }
 \keyword{datasets}

@@ -48,7 +48,7 @@
 #' Nucleic Acids Res. 2023;51(D1):D638-D646.
 #'
 #' @seealso
-#' \code{\link{ppi_h}} for human PPI network
+#' \code{ppi_h} for human PPI network
 #'
 #' @examples
 #' # Load mouse PPI

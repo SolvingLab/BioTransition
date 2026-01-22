@@ -107,7 +107,7 @@ MDNB <- function(
   feature <- rownames(expr)
   filtered_genes <- feature[feature %in% ppim[, 1]]
 
-  cat("Original gene number:", length(feature), "→ Genes in PPI:", length(filtered_genes), "\n")
+  cat("Original gene number:", length(feature), "-> Genes in PPI:", length(filtered_genes), "\n")
 
   # ============================================================================
   # 4. COMPUTE PAIRWISE PCC FOR ALL GENE PAIRS

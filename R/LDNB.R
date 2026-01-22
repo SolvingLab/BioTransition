@@ -7,7 +7,6 @@
 #' @param state.levels A vector for state sequence.
 #' @param cor.method specifies the method for correlation analysis.
 #' @param p.adjust.method correction method, a character string. Can be abbreviated. c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
-#' @param variation.method specifies the method for calculating gene variation. sd or cv.
 #' @param ppi Protein-protein interaction network; background network.
 #' @param min.combined.score Minimum combined score for determining protein-protein interaction.
 #' @param min.first.neighbor.size Minimum size of first order genes of a specific center gene.
@@ -174,7 +173,7 @@ LDNB <- function(
   failed_samples <- case.GI$ID[case.GI$GI == 0]
   if (length(failed_samples) > 0) {
     cat("\n")
-    cat(sprintf("⚠️  WARNING: %d samples failed to produce valid landscape indices:\n", length(failed_samples)))
+    cat(sprintf("[WARNING]: %d samples failed to produce valid landscape indices:\n", length(failed_samples)))
     cat(sprintf("   (e.g., %s)\n", paste(head(failed_samples, 3), collapse = ", ")))
     cat("   These samples are excluded from DNB gene identification.\n")
     cat("   Possible reasons: insufficient SSPN edges, extreme expression patterns\n")
@@ -192,7 +191,7 @@ LDNB <- function(
   # Handle case when no valid samples in critical state
   if (length(k) == 0) {
     cat("\n")
-    cat("⚠️  ERROR: No valid samples in the critical state for DNB gene identification.\n")
+    cat("[ERROR]: No valid samples in the critical state for DNB gene identification.\n")
     cat("   Using all valid samples instead.\n")
     cat("\n")
     k <- valid_case_LI
@@ -203,7 +202,7 @@ LDNB <- function(
   # Handle case when no common genes
   if (length(candidates) == 0) {
     cat("\n")
-    cat("⚠️  WARNING: No common genes found across samples.\n")
+    cat("[WARNING]: No common genes found across samples.\n")
     cat("   Using union of genes instead.\n")
     cat("\n")
     candidates <- unique(unlist(purrr::map(k, ~ .x$Gene)))
@@ -248,7 +247,7 @@ LDNB <- function(
   # Handle empty k4
   if (nrow(k4) == 0 || N == 0) {
     cat("\n")
-    cat("⚠️  WARNING: No DNB genes could be identified.\n")
+    cat("[WARNING]: No DNB genes could be identified.\n")
     cat("   Returning empty gene list.\n")
     cat("\n")
     DNB.genes <- character(0)

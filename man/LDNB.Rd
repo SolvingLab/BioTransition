@@ -52,8 +52,6 @@ LDNB(
 \item{top.p}{Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
 
 \item{nCores}{The number of cores will be used.}
-
-\item{variation.method}{specifies the method for calculating gene variation. sd or cv.}
 }
 \description{
 Performing landscape dynamic network biomarker analysis.
