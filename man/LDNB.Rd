@@ -16,7 +16,7 @@ LDNB(
   min.second.neighbor.size = 1,
   use.PCC.P.type = "FDR",
   use.PCC.P.cutoff = 0.05,
-  percent = F,
+  percent = FALSE,
   top.n = 30,
   top.p = 0.05,
   nCores = parallel::detectCores() - 10
@@ -47,9 +47,9 @@ LDNB(
 
 \item{percent}{Whether to use Percent to determine the number of DNB genes.}
 
-\item{top.n}{Only Percent = F takes effect. Center genes with top (number) DNB score were defined as DNB genes.}
+\item{top.n}{Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.}
 
-\item{top.p}{Only Percent = T takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
+\item{top.p}{Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
 
 \item{nCores}{The number of cores will be used.}
 

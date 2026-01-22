@@ -15,3 +15,4 @@ Vector of adjusted p-values
 \description{
 Fast implementation of Benjamini-Hochberg FDR correction.
 }
+\keyword{internal}

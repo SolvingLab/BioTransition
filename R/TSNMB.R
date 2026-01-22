@@ -11,8 +11,8 @@
 #' @param ppi Protein-protein interaction network; background network.
 #' @param min.combined.score Minimum combined score for determining protein-protein interaction.
 #' @param percent Whether to use Percent to determine the number of DNB genes.
-#' @param top.n Only Percent = F takes effect. Center genes with top (number) DNB score were defined as DNB genes.
-#' @param top.p Only Percent = T takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
+#' @param top.n Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.
+#' @param top.p Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
 #' @import magrittr
 #' @export
 TSNMB <- function(
@@ -24,7 +24,7 @@ TSNMB <- function(
     ppi = ppi_h,
     min.combined.score = 900,
     min.first.neighbor.size = 3,
-    percent = T,
+    percent = TRUE,
     top.n = 30,
     top.p = 0.05) {
   cat("+++ ThiS method was modified by Zaoqu Liu on the basis of sNMB!")
@@ -78,7 +78,7 @@ TSNMB <- function(
 
   state_case <- state[state$state != "ref", ]
 
-  if (percent == F) {
+  if (percent == FALSE) {
     if (top.n > length(ppil)) {
       stop(paste0(
         "\nThe number of candidata core genes is ",
@@ -113,7 +113,7 @@ TSNMB <- function(
 
   cat("+++ Calculating local sNMB score for each state...\n")
   cat("\n")
-  state.res <- purrr::map(state.levels[-1], ~ tmp_fun(.x), .progress = T)
+  state.res <- purrr::map(state.levels[-1], ~ tmp_fun(.x), .progress = TRUE)
   names(state.res) <- state.levels[-1]
   state.LI.list <- purrr::map(state.res, ~ .x$LI)
 

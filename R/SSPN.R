@@ -41,7 +41,7 @@ SSPN1 <- function(
   cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
   cat("\n")
 
-  ppi3 <- as.data.frame(t(apply(ppi2, 1, sort))) %>% dplyr::distinct(V1, V2, .keep_all = T)
+  ppi3 <- as.data.frame(t(apply(ppi2, 1, sort))) %>% dplyr::distinct(V1, V2, .keep_all = TRUE)
   cat(paste0("+++ ", nrow(ppi3), " edges in PPI network...\n"))
   cat("\n")
 
@@ -190,7 +190,7 @@ SSPN2 <- function(
   cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and net network...\n"))
   cat("\n")
 
-  net3 <- dplyr::distinct(net2, G1, G2, .keep_all = T)
+  net3 <- dplyr::distinct(net2, G1, G2, .keep_all = TRUE)
   cat(paste0("+++ ", nrow(net3), " edges in net network...\n"))
   cat("\n")
 

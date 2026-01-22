@@ -15,8 +15,8 @@
 #' @param use.PCC.P.type Nominal P value (NP) or adjust P value (FDR) were selected to define the significance of sPCC.
 #' @param use.PCC.P.cutoff A cutoff value for use.PCC.P.type.
 #' @param percent Whether to use Percent to determine the number of DNB genes.
-#' @param top.n Only Percent = F takes effect. Center genes with top (number) DNB score were defined as DNB genes.
-#' @param top.p Only Percent = T takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
+#' @param top.n Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.
+#' @param top.p Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
 #' @param nCores The number of cores will be used.
 #' @import future
 #' @import magrittr
@@ -33,7 +33,7 @@ LDNB <- function(
     min.second.neighbor.size = 1,
     use.PCC.P.type = "FDR",
     use.PCC.P.cutoff = 0.05,
-    percent = F,
+    percent = FALSE,
     top.n = 30,
     top.p = 0.05,
     nCores = parallel::detectCores() - 10) {
@@ -140,7 +140,7 @@ LDNB <- function(
       ))
     }
 
-    if (percent == F) {
+    if (percent == FALSE) {
       if (top.n > length(I)) {
         N <- length(I)
       } else {
@@ -162,7 +162,7 @@ LDNB <- function(
         sPCC.out = sPCC.out[retained],
         LI = I
       ),
-      GI = mean(sort(I, decreasing = T)[1:N])
+      GI = mean(sort(I, decreasing = TRUE)[1:N])
     ))
   })
 
@@ -228,7 +228,7 @@ LDNB <- function(
   k4 <- data.frame(Gene = candidates, LI = k3) %>%
     dplyr::arrange(dplyr::desc(LI))
 
-  if (percent == F) {
+  if (percent == FALSE) {
     if (top.n > nrow(k4)) {
       N <- nrow(k4)
     } else {

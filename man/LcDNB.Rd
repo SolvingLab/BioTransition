@@ -15,10 +15,10 @@ LcDNB(
   min.second.neighbor.size = 1,
   ppi = ppi_h,
   min.combined.score = 900,
-  percent = T,
+  percent = TRUE,
   top.n = 30,
   top.p = 0.05,
-  AddModuleSize = F
+  AddModuleSize = FALSE
 )
 }
 \arguments{
@@ -44,9 +44,9 @@ LcDNB(
 
 \item{percent}{Whether to use Percent to determine the number of DNB genes.}
 
-\item{top.n}{Only Percent = F takes effect. Center genes with top (number) DNB score were defined as DNB genes.}
+\item{top.n}{Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.}
 
-\item{top.p}{Only Percent = T takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
+\item{top.p}{Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
 
 \item{AddModuleSize}{Whether to consider gene module size when calculating DNB score.}
 }

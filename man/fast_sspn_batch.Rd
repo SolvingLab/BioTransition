@@ -33,3 +33,4 @@ List of perturbation data frames for each case sample
 Batch calculation of SSPN for all case samples.
 Major speedup by avoiding repeated matrix operations.
 }
+\keyword{internal}

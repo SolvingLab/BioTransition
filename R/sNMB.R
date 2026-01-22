@@ -11,8 +11,8 @@
 #' @param ppi Protein-protein interaction network; background network.
 #' @param min.combined.score Minimum combined score for determining protein-protein interaction.
 #' @param percent Whether to use Percent to determine the number of DNB genes.
-#' @param top.n Only Percent = F takes effect. Center genes with top (number) DNB score were defined as DNB genes.
-#' @param top.p Only Percent = T takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
+#' @param top.n Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.
+#' @param top.p Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
 #' @param nCores The number of cores will be used.
 #' @import future
 #' @import magrittr
@@ -26,7 +26,7 @@ sNMB <- function(
     ppi = ppi_h,
     min.combined.score = 900,
     min.first.neighbor.size = 3,
-    percent = T,
+    percent = TRUE,
     top.n = 30,
     top.p = 0.05,
     nCores = parallel::detectCores() - 10) {
@@ -81,7 +81,7 @@ sNMB <- function(
 
   state_case <- state[state$state != "ref", ]
 
-  if (percent == F) {
+  if (percent == FALSE) {
     if (top.n > length(ppil)) {
       stop(paste0(
         "\nThe number of candidata core genes is ",
@@ -117,7 +117,7 @@ sNMB <- function(
   cat("+++ Calculating local sNMB score for each case sample...\n")
   cat("\n")
   plan(multisession, workers = nCores)
-  case.res <- furrr::future_map(state_case$ID, ~ tmp_fun(.x), .progress = T)
+  case.res <- furrr::future_map(state_case$ID, ~ tmp_fun(.x), .progress = TRUE)
   names(case.res) <- state_case$ID
 
   cat("\n")
@@ -130,7 +130,7 @@ sNMB <- function(
     l <- purrr::map(case.res[case.GI$ID[case.GI$state == tt]], ~ .x$LI)
     l2 <- rowMeans(purrr::map_df(l, ~ .x$LI))
     l3 <- data.frame(Gene = names(ppil), LI = l2, row.names = NULL)
-    l3 <- l3[order(l3$LI, decreasing = T), ]
+    l3 <- l3[order(l3$LI, decreasing = TRUE), ]
   })
   names(caseLN.integrated) <- state.levels[-1]
 
