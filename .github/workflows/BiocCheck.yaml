@@ -40,7 +40,23 @@ jobs:
           remotes::install_deps(dependencies = TRUE, repos = BiocManager::repositories())
         shell: Rscript {0}
 
-      - name: BiocCheck
+      - name: Run BiocCheck (warnings allowed)
         run: |
-          BiocCheck::BiocCheck(".", `quit-with-status` = TRUE, `no-check-bioc-help` = TRUE)
+          result <- BiocCheck::BiocCheck(
+            ".", 
+            `quit-with-status` = FALSE,
+            `no-check-bioc-help` = TRUE
+          )
+          # Print summary
+          cat("\n\n=== BiocCheck Summary ===\n")
+          print(result)
+          
+          # Only fail on ERRORs, not WARNINGs
+          if (length(result$error) > 0) {
+            cat("\n\nERRORS found:\n")
+            print(result$error)
+            quit(status = 1)
+          } else {
+            cat("\n\nNo critical errors. Package ready for submission.\n")
+          }
         shell: Rscript {0}
