@@ -1,21 +1,116 @@
-#' @title Landscape conventional DNB analysis
+#' @title Local Conventional DNB Analysis
+#'
 #' @description
-#' Performing landscape conventional dynamic network biomarker analysis.
-#' @author Zaoqu Liu; E-mail: liuzaoqu@163.com
-#' @param expr A expression dataframe with gene rows and sample columns.
-#' @param state A time-series dataframe with two columns, the first is the sample names and the second is the group or time point information.
-#' @param state.levels A vector for state sequence.
-#' @param cor.method specifies the method for correlation analysis.
-#' @param p.adjust.method correction method, a character string. Can be abbreviated. c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")
-#' @param variation.method specifies the method for calculating gene variation. sd or cv.
-#' @param min.first.neighbor.size Minimum size of first order genes of a specific center gene.
-#' @param min.second.neighbor.size Minimum size of second order genes of a specific center gene.
-#' @param ppi Protein-protein interaction network; background network.
-#' @param min.combined.score Minimum combined score for determining protein-protein interaction.
-#' @param percent Whether to use Percent to determine the number of DNB genes.
-#' @param top.n Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.
-#' @param top.p Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.
-#' @param AddModuleSize Whether to consider gene module size when calculating DNB score.
+#' Performs local conventional dynamic network biomarker (LcDNB) analysis using
+#' protein-protein interaction (PPI) networks. This method extends the
+#' conventional DNB approach by incorporating network topology information.
+#'
+#' @param expr A numeric matrix or data.frame with genes in rows and samples in
+#'   columns. Row names should be gene symbols.
+#' @param state A data.frame with exactly two columns: sample identifiers
+#'   (matching column names in \code{expr}) and state/group labels.
+#' @param state.levels A character vector specifying the order of states for
+#'   analysis (e.g., time points or disease stages).
+#' @param cor.method Character string specifying correlation method. One of
+#'   \code{"pearson"} (default), \code{"spearman"}, or \code{"kendall"}.
+#' @param p.adjust.method Character string specifying p-value adjustment
+#'   method. One of \code{"BH"} (default), \code{"bonferroni"}, \code{"holm"},
+#'   \code{"hochberg"}, \code{"hommel"}, \code{"BY"}, \code{"fdr"}, or
+#'   \code{"none"}.
+#' @param variation.method Character string specifying the method for
+#'   calculating gene variation: \code{"sd"} (standard deviation, default) or
+#'   \code{"cv"} (coefficient of variation).
+#' @param min.first.neighbor.size Integer. Minimum number of first-order
+#'   neighbors required for a gene to be considered as a center gene.
+#'   Default: 3.
+#' @param min.second.neighbor.size Integer. Minimum number of second-order
+#'   neighbors required. Default: 1.
+#' @param ppi A data.frame containing protein-protein interactions. Must have
+#'   columns \code{G1}, \code{G2}, and \code{combined_score}. Default uses
+#'   built-in human PPI network.
+#' @param min.combined.score Numeric. Minimum STRING combined score for
+#'   filtering PPI interactions. Default: 900 (high confidence).
+#' @param percent Logical. If \code{TRUE} (default), use \code{top.p}
+#'   percentage; if \code{FALSE}, use \code{top.n} absolute number.
+#' @param top.n Integer. Number of top DNB genes when \code{percent = FALSE}.
+#'   Default: 30.
+#' @param top.p Numeric. Proportion of top DNB genes when \code{percent = TRUE}.
+#'   Default: 0.05 (5\%).
+#' @param AddModuleSize Logical. Whether to weight DNB score by module size.
+#'   Default: \code{FALSE}.
+#'
+#' @return A list with the following components:
+#' \describe{
+#'   \item{DNB.score}{A data.frame with states and their DNB scores}
+#'   \item{DNB.genes}{Character vector of identified DNB genes}
+#'   \item{CI_all}{List of data.frames with CI scores for all center genes in
+#'     each state}
+#'   \item{Gene_module}{List of first-order neighbor genes for each center gene}
+#'   \item{Candidate}{Data.frame summarizing candidate information per state}
+#'   \item{Cor}{List of correlation matrices for each state}
+#'   \item{V}{List of gene variation values for each state}
+#'   \item{PPI.used}{Filtered PPI network used in analysis}
+#'   \item{first.order.genes}{List of first-order neighbors}
+#'   \item{second.order.genes}{List of second-order neighbors}
+#' }
+#'
+#' @details
+#' LcDNB analysis identifies critical transitions by combining gene expression
+#' dynamics with PPI network topology. The algorithm:
+#' \enumerate{
+#'   \item Filters PPI network based on genes present in expression data
+#'   \item Identifies center genes with sufficient network connections
+#'   \item Calculates composite index (CI) using local network modules
+#'   \item Identifies the critical state and DNB genes
+#' }
+#'
+#' The composite index (CI) is calculated as:
+#' CI = (SD_in * |PCC_in|) / |PCC_out|
+#'
+#' where SD_in is the mean standard deviation of module genes,
+#' PCC_in is the mean correlation within the module, and
+#' PCC_out is the mean correlation with external genes.
+#'
+#' @author Zaoqu Liu \email{liuzaoqu@@163.com}
+#'
+#' @seealso
+#' \code{\link{cDNB}} for conventional DNB without PPI,
+#' \code{\link{LDNB}} for landscape DNB,
+#' \code{\link{ppi_h}} for human PPI network,
+#' \code{\link{ppi_m}} for mouse PPI network
+#'
+#' @examples
+#' # Create example data
+#' set.seed(42)
+#' n_genes <- 200
+#' n_samples <- 15
+#'
+#' expr <- matrix(
+#'   rnorm(n_genes * n_samples, mean = 10, sd = 2),
+#'   nrow = n_genes, ncol = n_samples
+#' )
+#' # Use gene names that exist in PPI network
+#' data(ppi_h)
+#' gene_names <- unique(c(ppi_h$G1, ppi_h$G2))[seq_len(n_genes)]
+#' rownames(expr) <- gene_names
+#' colnames(expr) <- paste0("Sample", seq_len(n_samples))
+#'
+#' state <- data.frame(
+#'   sample_id = colnames(expr),
+#'   state = rep(c("Normal", "Pre", "Disease"), each = 5)
+#' )
+#'
+#' \donttest{
+#' result <- LcDNB(
+#'   expr = expr,
+#'   state = state,
+#'   state.levels = c("Normal", "Pre", "Disease"),
+#'   min.combined.score = 400
+#' )
+#' result$DNB.score
+#' head(result$DNB.genes)
+#' }
+#'
 #' @export
 LcDNB <- function(
     expr,
@@ -32,169 +127,189 @@ LcDNB <- function(
     top.n = 30,
     top.p = 0.05,
     AddModuleSize = FALSE) {
-  cat("+++ ThiS method was modified by Zaoqu Liu on the basis of L-DNB!")
-  cat("\n")
 
-  cat("+++ Performing landscape conventional dynamic network biomarker analysis...\n")
-  cat("\n")
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two, the first is the sample names, and the second is the group or time point information!")
-  }
-  colnames(state) <- c("ID", "state")
-  state$state <- factor(state$state, state.levels)
-  state <- state[match(colnames(expr), state$ID), ]
-  ddl <- purrr::map(state.levels, \(x){
-    expr[, state$ID[state$state == x]]
-  })
-  names(ddl) <- state.levels
+    ## Input validation
+    .validate_expr(expr)
+    .validate_state(state, colnames(expr))
 
-  cat("+++ Calculating gene correlations for each group or time point...\n")
-  cat("\n")
-  # Removed suppressWarnings to make correlation issues visible
-  # If warnings occur, they indicate potential data quality issues
-  corl <- purrr::map(ddl, ~ CorandPval(t(.x), method = cor.method, p.adjust.method = p.adjust.method))
+    message("LcDNB: Local Conventional DNB Analysis")
+    message("--------------------------------------")
 
-  cat("+++ Calculating gene varaitions for each group or time point...\n")
-  cat("\n")
-  if (variation.method == "sd") {
-    vl <- purrr::map(ddl, ~ apply(.x, 1, sd))
-  }
-  if (variation.method == "cv") {
-    vl <- purrr::map(ddl, ~ apply(.x, 1, \(a){
-      sd(a) / mean(a)
-    }))
-  }
+    ## Prepare data
+    colnames(state) <- c("ID", "state")
+    state$state <- factor(state$state, levels = state.levels)
+    state <- state[match(colnames(expr), state$ID), ]
 
-  data <- purrr::map2(corl, vl, \(x, y){
-    list(r = x$r, v = y)
-  })
-
-  ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, ]
-
-  expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
-
-  ppi3 <- ppi2[ppi2$G1 %in% names(table(ppi2$G1))[table(ppi2$G1) >= min.first.neighbor.size], ]
-  ppil <- purrr::map(unique(ppi3$G1), \(x){
-    g <- ppi2[ppi2$G1 == x, ]
-    return(g$G2)
-  })
-  names(ppil) <- unique(ppi3$G1)
-
-  second_detials <- purrr::map2(ppil, names(ppil), \(x, y){
-    second_genes_df <- ppi2[unique(ppi2$G1) %in% c(x, y), ]
-    second_genes <- unique(c(second_genes_df$G1, second_genes_df$G2))
-    second_genes <- second_genes[!second_genes %in% c(x, y)]
-  })
-  retained <- purrr::map_vec(second_detials, length) >= min.second.neighbor.size
-
-  ppil <- ppil[retained] # first-order
-  second_detials <- second_detials[retained] # second-order
-
-  cat(paste0("+++ ", length(ppil), " centre genes detected in this dataset...\n"))
-  cat("\n")
-  cat("+++ Calculating module scores for each group or time point...\n")
-  cat("\n")
-
-  score_l <- purrr::map(data, \(x){
-    correlation <- x$r
-    v <- x$v
-    mol <- ppil
-    scores <- purrr::map2_df(mol, names(mol), \(genes_in, core_gene){
-      genes_out <- second_detials[[core_gene]]
-
-      # Calculate with na.rm=TRUE to handle NA values
-      cor_in <- mean(correlation[core_gene, genes_in], na.rm = TRUE)
-      cor_out <- mean(correlation[genes_in, genes_out], na.rm = TRUE)
-      v_in <- mean(v[genes_in], na.rm = TRUE)
-
-      # Handle invalid cor_out to prevent NaN/Inf
-      # This happens when: cor_out=0, NA, NaN, or all correlations are NA
-      if (is.na(cor_out) || is.nan(cor_out) || cor_out == 0 || abs(cor_out) < 1e-10) {
-        # Use a small positive value instead of 0 to avoid division issues
-        # This gives a very small DNB score but allows calculation to proceed
-        cor_out <- 1e-10
-      }
-
-      if (AddModuleSize) {
-        score <- sqrt(length(genes_in)) * v_in * cor_in / cor_out
-      } else {
-        score <- v_in * cor_in / cor_out
-      }
-
-      # Final safety check: replace any remaining invalid values with 0
-      if (is.na(score) || is.nan(score) || is.infinite(score)) {
-        score <- 0
-      }
-
-      return(data.frame(s = score, v_in = v_in, r_in = cor_in, r_out = cor_out))
+    ## Split expression by state
+    ddl <- lapply(state.levels, function(x) {
+        expr[, state$ID[state$state == x], drop = FALSE]
     })
-    return(data.frame(
-      Module = names(mol), Rank = -rank(scores$s) + length(mol) + 1,
-      Size = sapply(mol, length), CI = scores$s,
-      V_in = scores$v_in, R_in = scores$r_in, R_out = scores$r_out,
-      row.names = NULL
-    ))
-  })
+    names(ddl) <- state.levels
 
-  if (percent == FALSE) {
-    if (top.n > length(ppil)) {
-      stop(paste0(
-        "\nThe number of candidata core genes is ",
-        length(ppil), ", which is larger than the top.n you inputted!\n",
-        "Please change another number!"
-      ))
+    ## Calculate correlations
+    message("Calculating gene correlations...")
+    corl <- lapply(ddl, function(d) {
+        CorandPval(t(d), method = cor.method, p.adjust.method = p.adjust.method)
+    })
+
+    ## Calculate variations
+    message("Calculating gene variations...")
+    if (variation.method == "sd") {
+        vl <- lapply(ddl, function(d) apply(d, 1, sd))
+    } else if (variation.method == "cv") {
+        vl <- lapply(ddl, function(d) {
+            apply(d, 1, function(x) sd(x) / mean(x))
+        })
     }
-    N <- top.n
-  } else {
-    N <- ceiling(length(ppil) * top.p)
-  }
 
-  Candidate <- data.frame(
-    State = names(score_l),
-    CI = purrr::map_vec(score_l, \(x){
-      mean(x$CI[x$Rank %in% 1:N])
-    }),
-    row.names = NULL
-  )
+    data <- Map(function(x, y) list(r = x$r, v = y), corl, vl)
 
-  Candidate_DNB.genes_list <- purrr::map(score_l, \(x){
-    x$Module[x$Rank %in% 1:N]
-  })
-  DNB.genes <- Candidate_DNB.genes_list[[which.max(Candidate$CI)]]
+    ## Filter PPI network
+    ppi2 <- ppi[ppi$G1 %in% rownames(expr) &
+                ppi$G2 %in% rownames(expr) &
+                ppi$combined_score >= min.combined.score, ]
 
-  DNB.score <- purrr::map_vec(score_l, \(x){
-    x2 <- x[x$Module %in% DNB.genes, ]
-    mean(x2$CI)
-  })
-  DNB.score <- data.frame(State = state.levels, DNB.score = DNB.score)
+    expr <- expr[unique(ppi2$G1), , drop = FALSE]
+    message(sprintf("%d genes intersected with PPI network", nrow(expr)))
 
-  # Check for invalid DNB scores and warn user
-  invalid_states <- DNB.score$State[is.na(DNB.score$DNB.score) |
-    is.nan(DNB.score$DNB.score) |
-    DNB.score$DNB.score == 0]
-  if (length(invalid_states) > 0) {
-    cat("\n")
-    cat("[WARNING]: The following states have invalid or zero DNB scores:\n")
-    cat(paste0("   ", paste(invalid_states, collapse = ", "), "\n"))
-    cat("   Possible reasons:\n")
-    cat("   - Insufficient samples in these states\n")
-    cat("   - Extreme gene expression patterns (too uniform or too variable)\n")
-    cat("   - Many NA values in correlation calculations\n")
-    cat("   These states may not be suitable for LcDNB analysis.\n")
-    cat("\n")
-  }
+    ## Build local networks
+    ppi3 <- ppi2[ppi2$G1 %in% names(which(table(ppi2$G1) >= min.first.neighbor.size)), ]
+    ppil <- lapply(unique(ppi3$G1), function(x) {
+        ppi2$G2[ppi2$G1 == x]
+    })
+    names(ppil) <- unique(ppi3$G1)
 
-  cat(paste0("+++ ", Candidate$State[which.max(Candidate$CI)], " is the critical state...\n"))
-  cat(paste0("+++ ", length(DNB.genes), " genes (DNB module) involved in the critical state...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+    ## Get second-order neighbors
+    second_details <- Map(function(x, y) {
+        second_df <- ppi2[ppi2$G1 %in% c(x, y), ]
+        second_genes <- unique(c(second_df$G1, second_df$G2))
+        setdiff(second_genes, c(x, y))
+    }, ppil, names(ppil))
 
-  return(list(
-    DNB.score = DNB.score, DNB.genes = DNB.genes,
-    CI_all = score_l, Gene_module = ppil,
-    Candidate = Candidate, Cor = corl, V = vl, PPI.used = ppi2,
-    first.order.genes = ppil, second.order.genes = second_detials
-  ))
+    retained <- vapply(second_details, length, integer(1)) >= min.second.neighbor.size
+    ppil <- ppil[retained]
+    second_details <- second_details[retained]
+
+    message(sprintf("%d center genes detected", length(ppil)))
+
+    ## Calculate module scores
+    message("Calculating module scores...")
+    score_l <- lapply(data, function(x) {
+        correlation <- x$r
+        v <- x$v
+
+        scores <- do.call(rbind, Map(function(genes_in, core_gene) {
+            genes_out <- second_details[[core_gene]]
+
+            cor_in <- mean(correlation[core_gene, genes_in], na.rm = TRUE)
+            cor_out <- mean(correlation[genes_in, genes_out], na.rm = TRUE)
+            v_in <- mean(v[genes_in], na.rm = TRUE)
+
+            ## Handle edge cases
+            if (is.na(cor_out) || abs(cor_out) < 1e-10) cor_out <- 1e-10
+
+            score <- if (AddModuleSize) {
+                sqrt(length(genes_in)) * v_in * cor_in / cor_out
+            } else {
+                v_in * cor_in / cor_out
+            }
+
+            if (!is.finite(score)) score <- 0
+
+            data.frame(
+                s = score, v_in = v_in,
+                r_in = cor_in, r_out = cor_out
+            )
+        }, ppil, names(ppil)))
+
+        data.frame(
+            Module = names(ppil),
+            Rank = rank(-scores$s),
+            Size = vapply(ppil, length, integer(1)),
+            CI = scores$s,
+            V_in = scores$v_in,
+            R_in = scores$r_in,
+            R_out = scores$r_out,
+            row.names = NULL
+        )
+    })
+
+    ## Determine number of top genes
+    N <- if (percent) {
+        ceiling(length(ppil) * top.p)
+    } else {
+        if (top.n > length(ppil)) {
+            stop("top.n (", top.n, ") exceeds number of center genes (",
+                 length(ppil), ")")
+        }
+        top.n
+    }
+
+    ## Calculate candidate statistics
+    Candidate <- data.frame(
+        State = names(score_l),
+        CI = vapply(score_l, function(x) {
+            mean(x$CI[x$Rank <= N])
+        }, numeric(1)),
+        row.names = NULL
+    )
+
+    ## Identify DNB genes
+    Candidate_DNB_list <- lapply(score_l, function(x) {
+        x$Module[x$Rank <= N]
+    })
+    critical_idx <- which.max(Candidate$CI)
+    DNB.genes <- Candidate_DNB_list[[critical_idx]]
+
+    ## Calculate DNB scores
+    DNB.score <- data.frame(
+        State = state.levels,
+        DNB.score = vapply(score_l, function(x) {
+            mean(x$CI[x$Module %in% DNB.genes])
+        }, numeric(1))
+    )
+
+    ## Report results
+    message(sprintf("Critical state: %s", Candidate$State[critical_idx]))
+    message(sprintf("DNB genes identified: %d", length(DNB.genes)))
+    message("Done!")
+
+    list(
+        DNB.score = DNB.score,
+        DNB.genes = DNB.genes,
+        CI_all = score_l,
+        Gene_module = ppil,
+        Candidate = Candidate,
+        Cor = corl,
+        V = vl,
+        PPI.used = ppi2,
+        first.order.genes = ppil,
+        second.order.genes = second_details
+    )
+}
+
+## Internal validation functions
+.validate_expr <- function(expr) {
+    if (!is.matrix(expr) && !is.data.frame(expr)) {
+        stop("'expr' must be a matrix or data.frame", call. = FALSE)
+    }
+    if (is.null(rownames(expr))) {
+        stop("'expr' must have row names (gene symbols)", call. = FALSE)
+    }
+    if (is.null(colnames(expr))) {
+        stop("'expr' must have column names (sample IDs)", call. = FALSE)
+    }
+}
+
+.validate_state <- function(state, sample_ids) {
+    if (ncol(state) != 2) {
+        stop("'state' must have exactly 2 columns: sample ID and state",
+             call. = FALSE)
+    }
+    if (!all(state[[1]] %in% sample_ids)) {
+        missing <- setdiff(state[[1]], sample_ids)
+        stop("Some samples in 'state' not found in 'expr': ",
+             paste(head(missing, 3), collapse = ", "),
+             if (length(missing) > 3) "...", call. = FALSE)
+    }
 }

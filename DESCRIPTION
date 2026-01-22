@@ -4,39 +4,41 @@ Title: Dynamic Network Biomarker Analysis for Critical Transition Detection
 Version: 2.0.0
 Date: 2026-01-23
 Authors@R: c(
-    person("Zaoqu", "Liu", 
+    person("Zaoqu", "Liu",
         email = "liuzaoqu@163.com",
         role = c("aut", "cre"),
         comment = c(ORCID = "0000-0002-0452-742X")),
     person("Chuhan", "Zhang",
         role = "ctb",
         comment = "MDNB implementation"))
-Maintainer: Zaoqu Liu <liuzaoqu@163.com>
-Description: A comprehensive toolkit for detecting critical transitions and 
-    identifying dynamic network biomarkers (DNB) in biological systems. Critical 
-    transitions, characterized by sudden shifts between distinct states, are 
-    prevalent in complex biological processes including disease progression, 
-    cellular differentiation, and developmental transitions. This package 
-    implements seven complementary DNB methodologies: (1) conventional DNB 
-    (cDNB) based on the original DNB theory (Chen et al. 2012 <doi:10.1038/srep00342>); 
-    (2) topological DNB (tDNB), a novel approach utilizing network topology and 
-    scale-free properties developed by Liu Z; (3) landscape DNB (LDNB) for 
-    quantifying state transitions (Liu et al. 2019 <doi:10.1093/nsr/nwy162>); 
-    (4) local DNB (LcDNB) leveraging protein-protein interaction networks; 
-    (5) module-based DNB (MDNB) for modular analysis (Li et al. 2022 
-    <doi:10.1016/j.xinn.2022.100364>); (6) time-series network module biomarker 
-    (TSNMB) for temporal dynamics (Zhong et al. 2022 <doi:10.1093/jmcb/mjac052>); 
-    and (7) time-series leading edge (TSLE) analysis (Liu et al. 2020 
-    <doi:10.1093/bioinformatics/btz758>). Core computational routines are 
-    implemented in C++ via 'Rcpp' for optimal performance. Compatible with 
-    bulk RNA-seq, single-cell RNA-seq, and spatial transcriptomics data. 
-    Includes curated protein-protein interaction networks for human and mouse 
-    from the STRING database.
+Description: A comprehensive toolkit for detecting critical transitions and
+    identifying dynamic network biomarkers (DNB) in biological systems.
+    Critical transitions, characterized by sudden shifts between distinct
+    states, are prevalent in complex biological processes including disease
+    progression, cellular differentiation, and developmental transitions.
+    This package implements seven complementary DNB methodologies:
+    (1) conventional DNB (cDNB) based on the original DNB theory
+    (Chen et al. 2012 <doi:10.1038/srep00342>);
+    (2) topological DNB (tDNB), a novel approach utilizing network topology
+    and scale-free properties;
+    (3) landscape DNB (LDNB) for quantifying state transitions
+    (Liu et al. 2019 <doi:10.1093/nsr/nwy162>);
+    (4) local DNB (LcDNB) leveraging protein-protein interaction networks;
+    (5) module-based DNB (MDNB) for modular analysis
+    (Li et al. 2022 <doi:10.1016/j.xinn.2022.100364>);
+    (6) time-series network module biomarker (TSNMB) for temporal dynamics
+    (Zhong et al. 2022 <doi:10.1093/jmcb/mjac052>);
+    and (7) time-series leading edge (TSLE) analysis
+    (Liu et al. 2020 <doi:10.1093/bioinformatics/btz758>).
+    Core computational routines are implemented in C++ via 'Rcpp' for
+    optimal performance. Compatible with bulk RNA-seq, single-cell RNA-seq,
+    and spatial transcriptomics data. Includes curated protein-protein
+    interaction networks for human and mouse from the STRING database.
 License: GPL (>= 3)
 URL: https://github.com/SolvingLab/BioTransition,
     https://zaoqu-liu.r-universe.dev/BioTransition
 BugReports: https://github.com/SolvingLab/BioTransition/issues
-biocViews: 
+biocViews:
     Software,
     StatisticalMethod,
     Network,
@@ -52,7 +54,7 @@ ByteCompile: true
 LazyData: true
 LazyDataCompression: xz
 Depends: R (>= 4.4.0)
-Imports: 
+Imports:
     methods,
     stats,
     utils,
@@ -72,7 +74,9 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    BiocStyle
+    BiocStyle,
+    BiocCheck
 VignetteBuilder: knitr
+Config/testthat/edition: 3
 RoxygenNote: 7.3.3
 Roxygen: list(markdown = TRUE)

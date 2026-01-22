@@ -5,12 +5,28 @@ utils::globalVariables(c(
     ".",
     "G1", "G2",
     "V1", "V2",
-    # Data frame column names used in various functions
-    "DNB.score",
-    "State",
-    "GI", "LI",
+    # Data frame column names
+    "DNB.score", "State", "state",
+    "GI", "LI", "CI",
     "GLSE", "LSLE",
     "RLE", "RSD",
+    "Rank", "Module",
+    "caseFDR", "caseP", "corPert",
     # Data objects
-    "ppi_h"
+    "ppi_h", "ppi_m"
 ))
+
+#' @keywords internal
+.onLoad <- function(libname, pkgname) {
+    # Set default options if needed
+    invisible(NULL)
+}
+
+#' @keywords internal
+.onAttach <- function(libname, pkgname) {
+    packageStartupMessage(
+        "BioTransition v", utils::packageVersion(pkgname), "\n",
+        "Dynamic Network Biomarker Analysis for Critical Transition Detection\n",
+        "GitHub: https://github.com/SolvingLab/BioTransition"
+    )
+}

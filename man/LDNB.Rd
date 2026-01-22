@@ -2,7 +2,7 @@
 % Please edit documentation in R/LDNB.R
 \name{LDNB}
 \alias{LDNB}
-\title{Landscape DNB analysis}
+\title{Landscape DNB Analysis}
 \usage{
 LDNB(
   expr,
@@ -19,43 +19,93 @@ LDNB(
   percent = FALSE,
   top.n = 30,
   top.p = 0.05,
-  nCores = parallel::detectCores() - 10
+  nCores = max(1, parallel::detectCores() - 2)
 )
 }
 \arguments{
-\item{expr}{A expression dataframe with gene rows and sample columns.}
+\item{expr}{A numeric matrix or data.frame with genes in rows and samples in
+columns. Row names should be gene symbols.}
 
-\item{state}{A time-series dataframe with two columns, the first is the sample names and the second is the group or time point information.}
+\item{state}{A data.frame with exactly two columns: sample identifiers and
+state labels. Must include a \code{"ref"} state for reference samples.}
 
-\item{state.levels}{A vector for state sequence.}
+\item{state.levels}{A character vector specifying the order of states. The
+first level should be \code{"ref"} (reference state).}
 
-\item{cor.method}{specifies the method for correlation analysis.}
+\item{cor.method}{Character string specifying correlation method. One of
+\code{"pearson"} (default), \code{"spearman"}, or \code{"kendall"}.}
 
-\item{p.adjust.method}{correction method, a character string. Can be abbreviated. c("holm", "hochberg", "hommel", "bonferroni", "BH", "BY", "fdr", "none")}
+\item{p.adjust.method}{Character string specifying p-value adjustment method.
+Default: \code{"BH"}.}
 
-\item{ppi}{Protein-protein interaction network; background network.}
+\item{ppi}{A data.frame containing protein-protein interactions with columns
+\code{G1}, \code{G2}, and \code{combined_score}.}
 
-\item{min.combined.score}{Minimum combined score for determining protein-protein interaction.}
+\item{min.combined.score}{Numeric. Minimum STRING combined score. Default:
+990.}
 
-\item{min.first.neighbor.size}{Minimum size of first order genes of a specific center gene.}
+\item{min.first.neighbor.size}{Integer. Minimum first-order neighbors.
+Default: 10.}
 
-\item{min.second.neighbor.size}{Minimum size of second order genes of a specific center gene.}
+\item{min.second.neighbor.size}{Integer. Minimum second-order neighbors.
+Default: 1.}
 
-\item{use.PCC.P.type}{Nominal P value (NP) or adjust P value (FDR) were selected to define the significance of sPCC.}
+\item{use.PCC.P.type}{Character. Type of p-value for filtering: \code{"FDR"}
+(default) or \code{"NP"} (nominal p-value).}
 
-\item{use.PCC.P.cutoff}{A cutoff value for use.PCC.P.type.}
+\item{use.PCC.P.cutoff}{Numeric. P-value cutoff. Default: 0.05.}
 
-\item{percent}{Whether to use Percent to determine the number of DNB genes.}
+\item{percent}{Logical. Use percentage (\code{top.p}) or absolute number
+(\code{top.n}). Default: \code{FALSE}.}
 
-\item{top.n}{Only percent = FALSE takes effect. Center genes with top (number) DNB score were defined as DNB genes.}
+\item{top.n}{Integer. Number of top genes when \code{percent = FALSE}.
+Default: 30.}
 
-\item{top.p}{Only percent = TRUE takes effect. Center genes with top (percent) DNB score were defined as DNB genes.}
+\item{top.p}{Numeric. Proportion when \code{percent = TRUE}. Default: 0.05.}
 
-\item{nCores}{The number of cores will be used.}
+\item{nCores}{Integer. Number of CPU cores for parallel computation.}
+}
+\value{
+A list containing:
+\describe{
+\item{state.GI}{Data.frame with global indices per state}
+\item{DNB.genes}{Character vector of identified DNB genes}
+\item{Gene.LI}{Data.frame of genes ranked by landscape index}
+\item{case.GI}{Data.frame with global index per sample}
+\item{case.LI.list}{List of local indices per sample}
+\item{SSPN}{Sample-specific perturbation network results}
+}
 }
 \description{
-Performing landscape dynamic network biomarker analysis.
+Performs landscape dynamic network biomarker (LDNB) analysis for detecting
+critical transitions. This method uses sample-specific perturbation networks
+(SSPN) to identify tipping points in biological state transitions.
+}
+\details{
+LDNB analysis requires a reference state (labeled as \code{"ref"} in the
+state column) to construct background networks. The algorithm:
+\enumerate{
+\item Constructs sample-specific perturbation networks (SSPN)
+\item Calculates local landscape indices for each gene
+\item Aggregates to global indices per sample and state
+\item Identifies critical state and DNB genes
+}
+}
+\examples{
+\donttest{
+# LDNB requires a reference state
+# See vignette for detailed examples
+}
+
+}
+\references{
+Liu R, et al. (2019). Single-sample landscape entropy reveals the imminent
+phase transition during disease progression. National Science Review,
+7(7):775-785. \doi{10.1093/nsr/nwy162}
+}
+\seealso{
+\code{\link{SSPN1}}, \code{\link{LcDNB}}, \code{\link{SLE}}
 }
 \author{
-Zaoqu Liu; E-mail: liuzaoqu@163.com
+Zaoqu Liu \email{liuzaoqu@163.com}
 }

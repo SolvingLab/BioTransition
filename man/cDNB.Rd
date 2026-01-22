@@ -92,7 +92,12 @@ result$DNB.score
 \references{
 Chen L, Liu R, Liu ZP, Li M, Aihara K. (2012). Detecting early-warning
 signals for sudden deterioration of complex diseases by dynamical network
-biomarkers. Scientific Reports, 2:342. doi:10.1038/srep00342
+biomarkers. Scientific Reports, 2:342. \doi{10.1038/srep00342}
+}
+\seealso{
+\code{\link{tDNB}} for topological DNB,
+\code{\link{LcDNB}} for local DNB with PPI,
+\code{\link{MDNB}} for module-based DNB
 }
 \author{
 Zaoqu Liu; E-mail: liuzaoqu@163.com
