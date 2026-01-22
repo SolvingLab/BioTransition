@@ -1,3 +1,7 @@
+#' @importFrom Rcpp sourceCpp
+#' @useDynLib BioTransition, .registration = TRUE
+NULL
+
 # Global variables declaration for NSE (non-standard evaluation)
 # This silences R CMD check NOTEs about undefined global variables
 utils::globalVariables(c(
