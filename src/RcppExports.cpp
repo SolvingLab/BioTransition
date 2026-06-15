@@ -22,21 +22,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// fast_module_score_cpp
-List fast_module_score_cpp(NumericMatrix cor_matrix, NumericVector variation, IntegerVector module_genes, int all_genes, bool add_size);
-RcppExport SEXP _BioTransition_fast_module_score_cpp(SEXP cor_matrixSEXP, SEXP variationSEXP, SEXP module_genesSEXP, SEXP all_genesSEXP, SEXP add_sizeSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type cor_matrix(cor_matrixSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type variation(variationSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type module_genes(module_genesSEXP);
-    Rcpp::traits::input_parameter< int >::type all_genes(all_genesSEXP);
-    Rcpp::traits::input_parameter< bool >::type add_size(add_sizeSEXP);
-    rcpp_result_gen = Rcpp::wrap(fast_module_score_cpp(cor_matrix, variation, module_genes, all_genes, add_size));
-    return rcpp_result_gen;
-END_RCPP
-}
 // fast_cor_pval_cpp
 List fast_cor_pval_cpp(NumericMatrix mat, std::string method);
 RcppExport SEXP _BioTransition_fast_cor_pval_cpp(SEXP matSEXP, SEXP methodSEXP) {
@@ -79,7 +64,6 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_BioTransition_fast_cor_cpp", (DL_FUNC) &_BioTransition_fast_cor_cpp, 2},
-    {"_BioTransition_fast_module_score_cpp", (DL_FUNC) &_BioTransition_fast_module_score_cpp, 5},
     {"_BioTransition_fast_cor_pval_cpp", (DL_FUNC) &_BioTransition_fast_cor_pval_cpp, 2},
     {"_BioTransition_fast_sspn_batch", (DL_FUNC) &_BioTransition_fast_sspn_batch, 6},
     {"_BioTransition_fast_bh_adjust", (DL_FUNC) &_BioTransition_fast_bh_adjust, 1},

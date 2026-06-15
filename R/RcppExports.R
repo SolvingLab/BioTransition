@@ -13,24 +13,7 @@
 #' 
 #' @keywords internal
 fast_cor_cpp <- function(mat, method = "pearson") {
-    .Call('_BioTransition_fast_cor_cpp', PACKAGE = 'BioTransition', mat, method)
-}
-
-#' Fast Module Score Calculation (C++)
-#' 
-#' @description
-#' Optimized calculation of DNB module scores.
-#' 
-#' @param cor_matrix Correlation matrix
-#' @param variation Vector of gene variations
-#' @param module_genes Indices of genes in module (0-based)
-#' @param all_genes Total number of genes
-#' @param add_size Whether to include module size in score
-#' @return List with CI, V_in, R_in, R_out
-#' 
-#' @keywords internal
-fast_module_score_cpp <- function(cor_matrix, variation, module_genes, all_genes, add_size = FALSE) {
-    .Call('_BioTransition_fast_module_score_cpp', PACKAGE = 'BioTransition', cor_matrix, variation, module_genes, all_genes, add_size)
+    .Call(`_BioTransition_fast_cor_cpp`, mat, method)
 }
 
 #' Fast Correlation with P-values (C++)
@@ -45,7 +28,7 @@ fast_module_score_cpp <- function(cor_matrix, variation, module_genes, all_genes
 #' 
 #' @keywords internal
 fast_cor_pval_cpp <- function(mat, method = "pearson") {
-    .Call('_BioTransition_fast_cor_pval_cpp', PACKAGE = 'BioTransition', mat, method)
+    .Call(`_BioTransition_fast_cor_pval_cpp`, mat, method)
 }
 
 #' Fast SSPN Calculation for All Samples (C++)
@@ -64,7 +47,7 @@ fast_cor_pval_cpp <- function(mat, method = "pearson") {
 #' 
 #' @keywords internal
 fast_sspn_batch <- function(expr_mat, ref_indices, case_indices, ppi_gene1, ppi_gene2, gene_names) {
-    .Call('_BioTransition_fast_sspn_batch', PACKAGE = 'BioTransition', expr_mat, ref_indices, case_indices, ppi_gene1, ppi_gene2, gene_names)
+    .Call(`_BioTransition_fast_sspn_batch`, expr_mat, ref_indices, case_indices, ppi_gene1, ppi_gene2, gene_names)
 }
 
 #' Fast P-value Adjustment (C++)
@@ -77,6 +60,6 @@ fast_sspn_batch <- function(expr_mat, ref_indices, case_indices, ppi_gene1, ppi_
 #' 
 #' @keywords internal
 fast_bh_adjust <- function(p_values) {
-    .Call('_BioTransition_fast_bh_adjust', PACKAGE = 'BioTransition', p_values)
+    .Call(`_BioTransition_fast_bh_adjust`, p_values)
 }
 

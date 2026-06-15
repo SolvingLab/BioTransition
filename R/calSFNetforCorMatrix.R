@@ -50,13 +50,18 @@ calSFNetforCorMatrix <- function(
   diag(ADJ) <- 0
   ADJ[is.na(ADJ)] <- 0
 
-  numTOM <- stats::as.dist(ADJ %*% ADJ + ADJ)
-
-  kk <- apply(ADJ, 2, sum) # Connectivity for each gene
-
-  Dhelp1 <- matrix(kk, ncol = length(kk), nrow = length(kk))
-  denomTOM <- pmin(stats::as.dist(Dhelp1), stats::as.dist(t(Dhelp1))) + stats::as.dist(1 - ADJ)
-  TOMmatrix <- as.matrix(numTOM / denomTOM)
+  # Topological overlap (Zhang & Horvath 2005), computed on the full matrix so
+  # the denominator can be guarded and the result clamped to a valid [0, 1]
+  # similarity:  TOM_ij = (L_ij + a_ij) / (min(k_i, k_j) + 1 - a_ij), L = ADJ^2
+  kk <- colSums(ADJ) # Connectivity for each gene
+  numTOM <- ADJ %*% ADJ + ADJ
+  denomTOM <- outer(kk, kk, pmin) + 1 - ADJ
+  TOMmatrix <- numTOM / denomTOM
+  # Guard the degenerate denominator (isolated genes / a_ij -> 1), then keep a
+  # proper similarity with unit self-overlap.
+  TOMmatrix[!is.finite(TOMmatrix)] <- 0
+  TOMmatrix <- pmin(pmax(TOMmatrix, 0), 1)
+  diag(TOMmatrix) <- 1
 
   return(list(
     pickSotfThres = pickSotfThres,

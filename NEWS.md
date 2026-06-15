@@ -30,6 +30,10 @@
   `suppressMessages()`.
 * All methods now expose unified `DNB.genes` and `DNB.score` fields (existing
   method-specific field names are kept as aliases).
+* TOM construction (`calSFNetforCorMatrix`) now follows the standard
+  Zhang & Horvath form with a guarded denominator, clamping to `[0, 1]` and
+  unit self-overlap; numerical results for `tDNB()` are unchanged.
+* Removed the unused, inefficient `fast_module_score_cpp` C++ kernel.
 
 # BioTransition 2.0.0
 
