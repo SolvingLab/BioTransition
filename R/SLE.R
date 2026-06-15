@@ -29,19 +29,18 @@ SLE <- function(
     percent = TRUE,
     top.n = 30,
     top.p = 0.05,
-    nCores = parallel::detectCores() - 10) {
+    nCores = max(1L, parallel::detectCores() - 1L)) {
   # reference: Single-sample landscape entropy reveals the imminent phase transition during disease progression
 
-  cat("Publish details: Liu R et al. Single-sample landscape entropy reveals the imminent phase transition during disease progression. Bioinformatics. 2020 Mar 1;36(5):1522-1532. doi: 10.1093/bioinformatics/btz758\n")
-  cat("\n")
+  message("Publish details: Liu R et al. Single-sample landscape entropy reveals the imminent phase transition during disease progression. Bioinformatics. 2020 Mar 1;36(5):1522-1532. doi: 10.1093/bioinformatics/btz758")
+  message("")
 
-  cat("+++ Performing single-sample landscape entropy analysis...\n")
-  cat("\n")
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two, the first is the sample names, and the second is the group or time point information!")
-  }
+  message("+++ Performing single-sample landscape entropy analysis...")
+  message("")
+  checkStateTwoCol(state)
   colnames(state) <- c("ID", "state")
   state$state <- factor(state$state, state.levels)
+  checkRefState(state.levels)
   state <- state[match(colnames(expr), state$ID), ]
   ddl <- purrr::map(state.levels, \(x){
     expr[, state$ID[state$state == x]]
@@ -51,8 +50,8 @@ SLE <- function(
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, ]
 
   expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...")
+  message("")
 
   ppi3 <- ppi2[ppi2$G1 %in% names(table(ppi2$G1))[table(ppi2$G1) >= min.first.neighbor.size], ]
   ppil <- purrr::map(unique(ppi3$G1), \(x){
@@ -61,10 +60,10 @@ SLE <- function(
   })
   names(ppil) <- unique(ppi3$G1)
 
-  cat(paste0("+++ ", length(ppil), " centre genes detected in this dataset...\n"))
-  cat("\n")
-  cat("+++ Calculating background network using reference samples...\n")
-  cat("\n")
+  message("+++ ", length(ppil), " centre genes detected in this dataset...")
+  message("")
+  message("+++ Calculating background network using reference samples...")
+  message("")
 
   refExpr <- expr[, state$ID[state$state == "ref"]]
   refCor <- suppressWarnings(CorandPval(t(refExpr),
@@ -99,8 +98,8 @@ SLE <- function(
     })
   }
 
-  cat("+++ Calculating local SLE score for each case sample...\n")
-  cat("\n")
+  message("+++ Calculating local SLE score for each case sample...")
+  message("")
   plan(multisession, workers = nCores)
   caseLE.list <- furrr::future_map(state_case$ID, ~ tmp_fun(.x), .progress = TRUE)
   names(caseLE.list) <- state_case$ID
@@ -109,9 +108,9 @@ SLE <- function(
     data.frame(ID = y, GLSE = mean(x$LSLE))
   })
 
-  cat("\n")
-  cat("+++ Calculating global SLE score for each case sample...\n")
-  cat("\n")
+  message("")
+  message("+++ Calculating global SLE score for each case sample...")
+  message("")
   case.GLSE <- merge(state_case, case.GLSE, by = 1)
   caseLE.integrated <- purrr::map(state.levels[-1], \(tt){
     l <- caseLE.list[case.GLSE$ID[case.GLSE$state == tt]]
@@ -120,8 +119,8 @@ SLE <- function(
   })
   names(caseLE.integrated) <- state.levels[-1]
 
-  cat("+++ Calculating global SLE score for each state...\n")
-  cat("\n")
+  message("+++ Calculating global SLE score for each state...")
+  message("")
   state.GLSE <- dplyr::group_by(case.GLSE, state) %>%
     dplyr::summarise(GLSE = mean(GLSE))
 
@@ -143,13 +142,15 @@ SLE <- function(
     dplyr::top_n(n = N, wt = LSLE) %>%
     .[, 1]
 
-  cat(paste0("+++ ", state.GLSE$state[which.max(state.GLSE$GLSE)], " is the critical state...\n"))
-  cat(paste0("+++ ", length(SLE.gene), " genes (DNB module) involved in the critical state...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+  message("+++ ", state.GLSE$state[which.max(state.GLSE$GLSE)], " is the critical state...")
+  message("+++ ", length(SLE.gene), " genes (DNB module) involved in the critical state...")
+  message("")
+  message("+++ Done!")
   future::plan(future::sequential)
 
   return(list(
+    DNB.genes = SLE.gene,
+    DNB.score = state.GLSE,
     GSLE.score = state.GLSE,
     SLE.gene = SLE.gene,
     stateLE.list = caseLE.integrated,

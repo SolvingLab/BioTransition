@@ -11,7 +11,7 @@ SSPN1(
   p.adjust.method = "BH",
   ppi = ppi_h,
   min.combined.score = 900,
-  nCores = parallel::detectCores() - 10
+  nCores = max(1L, parallel::detectCores() - 1L)
 )
 }
 \arguments{

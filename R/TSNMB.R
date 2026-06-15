@@ -27,17 +27,16 @@ TSNMB <- function(
     percent = TRUE,
     top.n = 30,
     top.p = 0.05) {
-  cat("+++ ThiS method was modified by Zaoqu Liu on the basis of sNMB!")
-  cat("\n")
+  message("+++ ThiS method was modified by Zaoqu Liu on the basis of sNMB!")
+  message("")
 
-  cat("+++ Performing time-series network module biomarker analysis...\n")
-  cat("\n")
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two, the first is the sample names, and the second is the group or time point information!")
-  }
+  message("+++ Performing time-series network module biomarker analysis...")
+  message("")
+  checkStateTwoCol(state)
   colnames(state) <- c("ID", "state")
   state$state <- factor(state$state, state.levels)
   state <- state[match(colnames(expr), state$ID), ]
+  checkRefState(state.levels)
   ddl <- purrr::map(state.levels, \(x){
     expr[, state$ID[state$state == x]]
   })
@@ -46,8 +45,8 @@ TSNMB <- function(
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, ]
 
   expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...")
+  message("")
 
   ppi3 <- ppi2[ppi2$G1 %in% names(table(ppi2$G1))[table(ppi2$G1) >= min.first.neighbor.size], ]
 
@@ -57,10 +56,10 @@ TSNMB <- function(
   })
   names(ppil) <- unique(ppi3$G1)
 
-  cat(paste0("+++ ", length(ppil), " centre genes detected in this dataset...\n"))
-  cat("\n")
-  cat("+++ Calculating background network using reference samples...\n")
-  cat("\n")
+  message("+++ ", length(ppil), " centre genes detected in this dataset...")
+  message("")
+  message("+++ Calculating background network using reference samples...")
+  message("")
 
   refExpr <- expr[, state$ID[state$state == "ref"]]
 
@@ -107,19 +106,19 @@ TSNMB <- function(
     })
     LI <- data.frame(Gene = names(DLNSD), LI = LI, row.names = NULL) %>%
       dplyr::arrange(dplyr::desc(LI))
-    GI <- sum(LI$LI[1:N]) / N
+    GI <- sum(LI$LI[seq_len(N)]) / N
     return(list(DNet = DNet, LI = LI, GI = GI))
   }
 
-  cat("+++ Calculating local sNMB score for each state...\n")
-  cat("\n")
+  message("+++ Calculating local sNMB score for each state...")
+  message("")
   state.res <- purrr::map(state.levels[-1], ~ tmp_fun(.x), .progress = TRUE)
   names(state.res) <- state.levels[-1]
   state.LI.list <- purrr::map(state.res, ~ .x$LI)
 
-  cat("\n")
-  cat("+++ Calculating global sNMB score for each state...\n")
-  cat("\n")
+  message("")
+  message("+++ Calculating global sNMB score for each state...")
+  message("")
   state.GI <- data.frame(state = names(state.res), GI = purrr::map_vec(state.res, ~ .x$GI), row.names = NULL)
 
   state.DNet <- purrr::map(state.res, ~ .x$DNet)
@@ -129,10 +128,10 @@ TSNMB <- function(
     dplyr::top_n(n = N, wt = LI) %>%
     .[, 1]
 
-  cat(paste0("+++ ", state.GI$state[which.max(state.GI$GI)], " is the critical state...\n"))
-  cat(paste0("+++ ", length(signaling.gene), " signaling genes involved in the critical state...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+  message("+++ ", state.GI$state[which.max(state.GI$GI)], " is the critical state...")
+  message("+++ ", length(signaling.gene), " signaling genes involved in the critical state...")
+  message("")
+  message("+++ Done!")
 
   return(list(
     state.GI = state.GI,
@@ -142,6 +141,8 @@ TSNMB <- function(
     refNet = refNet,
     refLNSD = refLNSD,
     Gene_module = ppil,
-    PPI.used = ppi2
+    PPI.used = ppi2,
+    DNB.genes = signaling.gene,
+    DNB.score = state.GI
   ))
 }

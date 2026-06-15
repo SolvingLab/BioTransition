@@ -27,17 +27,16 @@ TSLE <- function(
     percent = TRUE,
     top.n = 30,
     top.p = 0.05) {
-  cat("+++ ThiS method was modified by Zaoqu Liu on the basis of SLE!")
-  cat("\n")
+  message("+++ ThiS method was modified by Zaoqu Liu on the basis of SLE!")
+  message("")
 
-  cat("+++ Performing time-series landscape entropy analysis...\n")
-  cat("\n")
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two, the first is the sample names, and the second is the group or time point information!")
-  }
+  message("+++ Performing time-series landscape entropy analysis...")
+  message("")
+  checkStateTwoCol(state)
   colnames(state) <- c("ID", "state")
   state$state <- factor(state$state, state.levels)
   state <- state[match(colnames(expr), state$ID), ]
+  checkRefState(state.levels)
   ddl <- purrr::map(state.levels, \(x){
     expr[, state$ID[state$state == x]]
   })
@@ -46,8 +45,8 @@ TSLE <- function(
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, ]
 
   expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...")
+  message("")
 
   ppi3 <- ppi2[ppi2$G1 %in% names(table(ppi2$G1))[table(ppi2$G1) >= min.first.neighbor.size], ]
   ppil <- purrr::map(unique(ppi3$G1), \(x){
@@ -56,10 +55,10 @@ TSLE <- function(
   })
   names(ppil) <- unique(ppi3$G1)
 
-  cat(paste0("+++ ", length(ppil), " centre genes detected in this dataset...\n"))
-  cat("\n")
-  cat("+++ Calculating background network for reference samples...\n")
-  cat("\n")
+  message("+++ ", length(ppil), " centre genes detected in this dataset...")
+  message("")
+  message("+++ Calculating background network for reference samples...")
+  message("")
 
   refExpr <- expr[, state$ID[state$state == "ref"]]
   refCor <- suppressWarnings(CorandPval(t(refExpr),
@@ -94,13 +93,13 @@ TSLE <- function(
     })
   }
 
-  cat("+++ Calculating local SLE score for each state...\n")
-  cat("\n")
+  message("+++ Calculating local SLE score for each state...")
+  message("")
   caseLE.list <- purrr::map(state.levels[-1], ~ tmp_fun(.x), .progress = TRUE)
   names(caseLE.list) <- state.levels[-1]
 
-  cat("+++ Calculating global SLE score for each state...\n")
-  cat("\n")
+  message("+++ Calculating global SLE score for each state...")
+  message("")
   case.GLSE <- purrr::map2_df(caseLE.list, names(caseLE.list), \(x, y){
     data.frame(state = y, GLSE = mean(x$LSLE))
   })
@@ -123,10 +122,10 @@ TSLE <- function(
     dplyr::top_n(n = N, wt = LSLE) %>%
     .[, 1]
 
-  cat(paste0("+++ ", case.GLSE$state[which.max(case.GLSE$GLSE)], " is the critical state...\n"))
-  cat(paste0("+++ ", length(SLE.gene), " genes (DNB module) involved in the critical state...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+  message("+++ ", case.GLSE$state[which.max(case.GLSE$GLSE)], " is the critical state...")
+  message("+++ ", length(SLE.gene), " genes (DNB module) involved in the critical state...")
+  message("")
+  message("+++ Done!")
 
   return(list(
     GSLE.score = case.GLSE,
@@ -134,6 +133,8 @@ TSLE <- function(
     stateLE.list = caseLE.list,
     refLE = refLE,
     Gene_module = ppil,
-    PPI.used = ppi2
+    PPI.used = ppi2,
+    DNB.genes = SLE.gene,
+    DNB.score = case.GLSE
   ))
 }

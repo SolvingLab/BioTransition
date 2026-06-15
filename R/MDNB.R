@@ -40,19 +40,17 @@ MDNB <- function(
     PCC.min = 0.02,
     PCC.module = 0.02,
     numeber.module.QI = 10) {
-  cat("Publish details: Li L et al. (2022) Innovation. DOI: 10.1016/j.xinn.2022.100364\n")
-  cat("\n")
+  message("Publish details: Li L et al. (2022) Innovation. DOI: 10.1016/j.xinn.2022.100364")
+  message("")
 
-  cat("+++ Performing module-based dynamic network biomarker analysis...\n")
-  cat("\n")
+  message("+++ Performing module-based dynamic network biomarker analysis...")
+  message("")
 
   # ============================================================================
   # 1. DATA PREPARATION
   # ============================================================================
 
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two: sample names and group information!")
-  }
+  checkStateTwoCol(state)
 
   colnames(state) <- c("ID", "State")
   expr <- expr[, colnames(expr) %in% state$ID]
@@ -77,9 +75,9 @@ MDNB <- function(
   # 2. NORMALIZE EXPRESSION AND COMPUTE SD FOR EACH STATE
   # ============================================================================
 
-  cat("+++ Normalizing expression and computing SD for each state...\n")
+  message("+++ Normalizing expression and computing SD for each state...")
 
-  for (d in 1:nrow(state_idx)) {
+  for (d in seq_len(nrow(state_idx))) {
     long_str <- state_idx[d, 2]
     state_cols <- unlist(strsplit(long_str, split = ","))
     scaled_data <- t(scale(t(expr[, state_cols])))
@@ -93,7 +91,7 @@ MDNB <- function(
   rownames(ssd) <- rownames(expr)
   colnames(ssd) <- state_idx[, 1]
 
-  for (i in 1:nrow(state_idx)) {
+  for (i in seq_len(nrow(state_idx))) {
     long_str <- state_idx[i, 2]
     state_cols <- unlist(strsplit(long_str, split = ","))
     ssd[, i] <- apply(expr[, state_cols], 1, sd, na.rm = TRUE)
@@ -103,17 +101,17 @@ MDNB <- function(
   # 3. SCREEN GENES IN PPI
   # ============================================================================
 
-  cat("+++ Screening genes in PPI network...\n")
+  message("+++ Screening genes in PPI network...")
   feature <- rownames(expr)
   filtered_genes <- feature[feature %in% ppim[, 1]]
 
-  cat("Original gene number:", length(feature), "-> Genes in PPI:", length(filtered_genes), "\n")
+  message("Original gene number: ", length(feature), " -> Genes in PPI: ", length(filtered_genes))
 
   # ============================================================================
   # 4. COMPUTE PAIRWISE PCC FOR ALL GENE PAIRS
   # ============================================================================
 
-  cat("+++ Computing pairwise PCC for all gene pairs within groups...\n")
+  message("+++ Computing pairwise PCC for all gene pairs within groups...")
 
   # Check C++ availability
   has_cpp <- exists("fast_cor_cpp", where = asNamespace("BioTransition"), mode = "function")
@@ -126,7 +124,7 @@ MDNB <- function(
   total_groups <- nrow(state_idx)
   pb <- txtProgressBar(min = 0, max = total_groups, style = 3, width = 50)
 
-  for (t in 1:total_groups) {
+  for (t in seq_len(total_groups)) {
     long_str <- state_idx[t, 2]
     state_cols <- unlist(strsplit(long_str, split = ","))
     expr_m <- expr[filtered_genes, state_cols]
@@ -156,13 +154,13 @@ MDNB <- function(
   # 5. GENERATE GENE MODULES
   # ============================================================================
 
-  cat("\n+++ Generating gene modules...\n")
+  message("\n+++ Generating gene modules...")
 
   # Find seed genes
   max_pcc <- apply(allpcc[[1]], 1, max)
   seed_genes <- names(max_pcc[max_pcc >= PCC.min])
 
-  cat("Number of seed genes (max PCC >=", PCC.min, "):", length(seed_genes), "\n")
+  message("Number of seed genes (max PCC >= ", PCC.min, "): ", length(seed_genes))
 
   # Build modules
   modules <- list()
@@ -203,18 +201,18 @@ MDNB <- function(
   # Remove NULL modules
   modules <- modules[!sapply(modules, is.null)]
 
-  cat("\nNumber of modules constructed:", length(modules), "\n")
+  message("\nNumber of modules constructed: ", length(modules))
 
   # ============================================================================
   # 6. CALCULATE CONTRIBUTION INDEX (CI) FOR EACH MODULE
   # ============================================================================
 
-  cat("+++ Calculating Contribution Index (CI) for each module...\n")
+  message("+++ Calculating Contribution Index (CI) for each module...")
 
   CI <- list()
 
   for (t in seq_along(allpcc)) {
-    cat(sprintf("Group %d/%d: %s\n", t, length(allpcc), names(allpcc)[t]))
+    message(sprintf("Group %d/%d: %s", t, length(allpcc), names(allpcc)[t]))
 
     cor_matrix <- allpcc[[t]]
     CI[[t]] <- matrix(0, nrow = length(modules), ncol = 6)
@@ -268,7 +266,7 @@ MDNB <- function(
     close(pb_module)
 
     colnames(CI[[t]]) <- c("Module", "Size", "CI", "SD_ave", "R_in", "R_out")
-    rownames(CI[[t]]) <- paste0("Module", 1:length(modules))
+    rownames(CI[[t]]) <- paste0("Module", seq_along(modules))
 
     CI[[t]][is.na(CI[[t]])] <- 0
     CI[[t]][is.infinite(CI[[t]])] <- 0
@@ -276,21 +274,21 @@ MDNB <- function(
   }
 
   names(CI) <- state.levels
-  names(modules) <- paste0("Module", 1:length(modules))
+  names(modules) <- paste0("Module", seq_along(modules))
 
   # Create module names matrix
   module_names_matrix <- matrix(
     sapply(modules, function(x) x[["name"]]),
     ncol = 1
   )
-  rownames(module_names_matrix) <- paste0("Module", 1:length(modules))
+  rownames(module_names_matrix) <- paste0("Module", seq_along(modules))
   colnames(module_names_matrix) <- "Module_Core_Gene"
 
   # ============================================================================
   # 7. CALCULATE QUANTITATIVE INDEX (QI)
   # ============================================================================
 
-  cat("+++ Calculating Quantitative Index (QI)...\n")
+  message("+++ Calculating Quantitative Index (QI)...")
   ng <- nrow(state_idx)
   topmCI <- vector("list", ng)
   avetopCI <- numeric(ng)
@@ -313,7 +311,7 @@ MDNB <- function(
   # 8. DRAW QI CHANGE CHART
   # ============================================================================
 
-  cat("+++ Drawing QI change chart...\n")
+  message("+++ Drawing QI change chart...")
   QI_df <- data.frame(
     State = rownames(QI),
     DNB.score = QI[, 1]
@@ -343,13 +341,13 @@ MDNB <- function(
 
   print(p)
 
-  cat("\n")
+  message("")
 
   # ============================================================================
   # 9. CALCULATE DNB GENES
   # ============================================================================
 
-  cat("+++ Calculating DNB genes...\n")
+  message("+++ Calculating DNB genes...")
 
   # Find the state with largest DNB score difference compared to adjacent states
   score_diff_prev <- c(0, diff(QI_df$DNB.score))
@@ -371,10 +369,10 @@ MDNB <- function(
   top_module <- ci_matrix_sorted$Module[1]
   DNB_genes <- modules[[top_module]][["members"]]
 
-  cat(paste0("+++ ", key_state, " is the critical state...\n"))
-  cat(paste0("+++ ", length(DNB_genes), " genes (DNB module) involved...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+  message("+++ ", key_state, " is the critical state...")
+  message("+++ ", length(DNB_genes), " genes (DNB module) involved...")
+  message("")
+  message("+++ Done!")
 
   # ============================================================================
   # 10. RETURN RESULTS

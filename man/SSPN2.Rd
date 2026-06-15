@@ -10,7 +10,7 @@ SSPN2(
   net,
   cor.method = "pearson",
   p.adjust.method = "BH",
-  nCores = parallel::detectCores() - 10
+  nCores = max(1L, parallel::detectCores() - 1L)
 )
 }
 \arguments{

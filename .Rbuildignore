@@ -11,3 +11,6 @@
 ^\.github$
 ^cran-comments\.md$
 ^revdep$
+^CLAUDE\.md$
+^BioTransition\.BiocCheck$
+^Rplots\.pdf$

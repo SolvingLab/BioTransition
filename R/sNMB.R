@@ -29,17 +29,16 @@ sNMB <- function(
     percent = TRUE,
     top.n = 30,
     top.p = 0.05,
-    nCores = parallel::detectCores() - 10) {
-  cat("Publish details: Zhong J et al. The single-sample network module biomarker (sNMB) method reveals the pre-deterioration stage of disease progression. J Mol Cell Biol. 2022 Dec 26;14(8):mjac052. doi: 10.1093/jmcb/mjac052\n")
-  cat("\n")
+    nCores = max(1L, parallel::detectCores() - 1L)) {
+  message("Publish details: Zhong J et al. The single-sample network module biomarker (sNMB) method reveals the pre-deterioration stage of disease progression. J Mol Cell Biol. 2022 Dec 26;14(8):mjac052. doi: 10.1093/jmcb/mjac052")
+  message("")
 
-  cat("+++ Performing single-sample network module biomarker analysis...\n")
-  cat("\n")
-  if (ncol(state) != 2) {
-    stop("Number of state columns must be two, the first is the sample names, and the second is the group or time point information!")
-  }
+  message("+++ Performing single-sample network module biomarker analysis...")
+  message("")
+  checkStateTwoCol(state)
   colnames(state) <- c("ID", "state")
   state$state <- factor(state$state, state.levels)
+  checkRefState(state.levels)
   state <- state[match(colnames(expr), state$ID), ]
   ddl <- purrr::map(state.levels, \(x){
     expr[, state$ID[state$state == x]]
@@ -49,8 +48,8 @@ sNMB <- function(
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, ]
 
   expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...")
+  message("")
 
   ppi3 <- ppi2[ppi2$G1 %in% names(table(ppi2$G1))[table(ppi2$G1) >= min.first.neighbor.size], ]
 
@@ -60,10 +59,10 @@ sNMB <- function(
   })
   names(ppil) <- unique(ppi3$G1)
 
-  cat(paste0("+++ ", length(ppil), " centre genes detected in this dataset...\n"))
-  cat("\n")
-  cat("+++ Calculating background network using reference samples...\n")
-  cat("\n")
+  message("+++ ", length(ppil), " centre genes detected in this dataset...")
+  message("")
+  message("+++ Calculating background network using reference samples...")
+  message("")
 
   refExpr <- expr[, state$ID[state$state == "ref"]]
 
@@ -110,19 +109,19 @@ sNMB <- function(
     })
     LI <- data.frame(Gene = names(DLNSD), LI = LI, row.names = NULL) %>%
       dplyr::arrange(dplyr::desc(LI))
-    GI <- sum(LI$LI[1:N]) / N
+    GI <- sum(LI$LI[seq_len(N)]) / N
     return(list(DNet = DNet, LI = LI, GI = GI))
   }
 
-  cat("+++ Calculating local sNMB score for each case sample...\n")
-  cat("\n")
+  message("+++ Calculating local sNMB score for each case sample...")
+  message("")
   plan(multisession, workers = nCores)
   case.res <- furrr::future_map(state_case$ID, ~ tmp_fun(.x), .progress = TRUE)
   names(case.res) <- state_case$ID
 
-  cat("\n")
-  cat("+++ Calculating global sNMB score for each case sample...\n")
-  cat("\n")
+  message("")
+  message("+++ Calculating global sNMB score for each case sample...")
+  message("")
   case.GI <- state_case %>%
     dplyr::mutate(GI = purrr::map_vec(case.res, ~ .x$GI))
 
@@ -134,8 +133,8 @@ sNMB <- function(
   })
   names(caseLN.integrated) <- state.levels[-1]
 
-  cat("+++ Calculating global sNMB score for each state...\n")
-  cat("\n")
+  message("+++ Calculating global sNMB score for each state...")
+  message("")
   state.GI <- dplyr::group_by(case.GI, state) %>%
     dplyr::summarise(GI = mean(GI))
 
@@ -144,13 +143,15 @@ sNMB <- function(
     dplyr::top_n(n = N, wt = LI) %>%
     .[, 1]
 
-  cat(paste0("+++ ", state.GI$state[which.max(state.GI$GI)], " is the critical state...\n"))
-  cat(paste0("+++ ", length(signaling.gene), " signaling genes involved in the critical state...\n"))
-  cat("\n")
-  cat("+++ Done!\n")
+  message("+++ ", state.GI$state[which.max(state.GI$GI)], " is the critical state...")
+  message("+++ ", length(signaling.gene), " signaling genes involved in the critical state...")
+  message("")
+  message("+++ Done!")
   future::plan(future::sequential)
 
   return(list(
+    DNB.genes = signaling.gene,
+    DNB.score = state.GI,
     state.GI = state.GI,
     state.LI.list = caseLN.integrated,
     signaling.gene = signaling.gene,

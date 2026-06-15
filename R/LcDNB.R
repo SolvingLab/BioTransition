@@ -51,9 +51,7 @@ LcDNB <- function(
     if (!is.matrix(expr) && !is.data.frame(expr)) {
         stop("'expr' must be a matrix or data.frame", call. = FALSE)
     }
-    if (ncol(state) != 2) {
-        stop("'state' must have exactly 2 columns", call. = FALSE)
-    }
+    checkStateTwoCol(state)
 
     message("LcDNB: Local Conventional DNB Analysis")
     message("--------------------------------------")
@@ -68,6 +66,7 @@ LcDNB <- function(
         expr[, state$ID[state$state == x], drop = FALSE]
     })
     names(ddl) <- state.levels
+    checkNoEmptyState(ddl)
 
     ## Calculate correlations
     message("Calculating gene correlations...")

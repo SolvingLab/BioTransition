@@ -16,7 +16,7 @@ SLE(
   percent = TRUE,
   top.n = 30,
   top.p = 0.05,
-  nCores = parallel::detectCores() - 10
+  nCores = max(1L, parallel::detectCores() - 1L)
 )
 }
 \arguments{

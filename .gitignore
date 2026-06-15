@@ -31,3 +31,5 @@ src/*.dll
 src-i386
 src-x64
 BioTransition.Rcheck
+BioTransition.BiocCheck/
+Rplots.pdf

@@ -19,12 +19,12 @@ SSPN1 <- function(
     p.adjust.method = "BH",
     ppi = ppi_h,
     min.combined.score = 900,
-    nCores = parallel::detectCores() - 10) {
-  cat("Publish details: Liu X et al. Personalized characterization of diseases using sample-specific networks. Nucleic Acids Res. 2016 Dec 15;44(22):e164. doi: 10.1093/nar/gkw772\n")
-  cat("\n")
+    nCores = max(1L, parallel::detectCores() - 1L)) {
+  message("Publish details: Liu X et al. Personalized characterization of diseases using sample-specific networks. Nucleic Acids Res. 2016 Dec 15;44(22):e164. doi: 10.1093/nar/gkw772")
+  message("")
 
-  cat("+++ Performing sample-specific perturbation network analysis...\n")
-  cat("\n")
+  message("+++ Performing sample-specific perturbation network analysis...")
+  message("")
 
   # Auto-detect C++ availability (silently)
   use_cpp <- cor.method == "pearson" &&
@@ -35,18 +35,20 @@ SSPN1 <- function(
   } else {
     case.samples <- colnames(expr)[!colnames(expr) %in% ref.samples]
   }
+  checkNonEmpty(length(case.samples), "case samples", "All columns are in 'ref.samples'.")
 
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, -3]
   expr <- expr[unique(c(ppi2$G1)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and PPI network...")
+  message("")
 
   ppi3 <- as.data.frame(t(apply(ppi2, 1, sort))) %>% dplyr::distinct(V1, V2, .keep_all = TRUE)
-  cat(paste0("+++ ", nrow(ppi3), " edges in PPI network...\n"))
-  cat("\n")
+  checkNonEmpty(nrow(ppi3), "PPI edges", "Try lowering 'min.combined.score'.")
+  message("+++ ", nrow(ppi3), " edges in PPI network...")
+  message("")
 
-  cat("+++ Calculating background network using reference samples...\n")
-  cat("\n")
+  message("+++ Calculating background network using reference samples...")
+  message("")
 
   refExpr <- expr[, ref.samples]
 
@@ -61,10 +63,10 @@ SSPN1 <- function(
     ))$r
   }
 
-  ppi3$refCor <- sapply(1:nrow(ppi3), function(i) refCor[ppi3$V1[i], ppi3$V2[i]])
+  ppi3$refCor <- sapply(seq_len(nrow(ppi3)), function(i) refCor[ppi3$V1[i], ppi3$V2[i]])
 
-  cat("+++ Calculating sample-specific perturbation network for each case sample...\n")
-  cat("\n")
+  message("+++ Calculating sample-specific perturbation network for each case sample...")
+  message("")
 
   if (use_cpp) {
     # C++ batch processing
@@ -89,7 +91,7 @@ SSPN1 <- function(
     )
 
     # Adjust p-values for each sample
-    caseSSPN.list <- lapply(1:length(case.samples), function(i) {
+    caseSSPN.list <- lapply(seq_along(case.samples), function(i) {
       df <- as.data.frame(cpp_results[[i]])
 
       # Adjust p-values
@@ -111,7 +113,7 @@ SSPN1 <- function(
     tmp_fun <- function(id) {
       caseExpr <- cbind(refExpr, case = expr[, id])
       caseCor <- suppressWarnings(CorandPval(t(caseExpr), method = cor.method, p.adjust.method = p.adjust.method))$r
-      caseCor2 <- purrr::map_vec(1:nrow(ppi3), ~ caseCor[ppi3$V1[.x], ppi3$V2[.x]])
+      caseCor2 <- purrr::map_vec(seq_len(nrow(ppi3)), ~ caseCor[ppi3$V1[.x], ppi3$V2[.x]])
       casePert <- caseCor2 - ppi3$refCor
       caseZ <- casePert / ((1 - ppi3$refCor^2) / (length(ref.samples) - 1))
       caseP <- purrr::map_vec(caseZ, function(x) {
@@ -134,8 +136,8 @@ SSPN1 <- function(
   rownames(case.SSPN.Pert.matrix) <- rownames(case.SSPN.P.matrix) <-
     rownames(case.SSPN.FDR.matrix) <- paste0(ppi3$V1, "_", ppi3$V2)
 
-  cat("\n")
-  cat("+++ Done!\n")
+  message("")
+  message("+++ Done!")
   future::plan(future::sequential)
 
   return(list(
@@ -167,12 +169,12 @@ SSPN2 <- function(
     net,
     cor.method = "pearson",
     p.adjust.method = "BH",
-    nCores = parallel::detectCores() - 10) {
-  cat("Publish details: Liu X et al. Personalized characterization of diseases using sample-specific networks. Nucleic Acids Res. 2016 Dec 15;44(22):e164. doi: 10.1093/nar/gkw772\n")
-  cat("\n")
+    nCores = max(1L, parallel::detectCores() - 1L)) {
+  message("Publish details: Liu X et al. Personalized characterization of diseases using sample-specific networks. Nucleic Acids Res. 2016 Dec 15;44(22):e164. doi: 10.1093/nar/gkw772")
+  message("")
 
-  cat("+++ Performing sample-specific perturbation network analysis...\n")
-  cat("\n")
+  message("+++ Performing sample-specific perturbation network analysis...")
+  message("")
 
   # Auto-detect C++ availability (silently)
   use_cpp <- cor.method == "pearson" &&
@@ -183,19 +185,21 @@ SSPN2 <- function(
   } else {
     case.samples <- colnames(expr)[!colnames(expr) %in% ref.samples]
   }
+  checkNonEmpty(length(case.samples), "case samples", "All columns are in 'ref.samples'.")
 
   colnames(net) <- c("G1", "G2")
   net2 <- net[net$G1 %in% rownames(expr) & net$G2 %in% rownames(expr), ]
   expr <- expr[unique(c(net2$G1, net2$G2)), ]
-  cat(paste0("+++ ", nrow(expr), " intersected genes between expression matrix and net network...\n"))
-  cat("\n")
+  message("+++ ", nrow(expr), " intersected genes between expression matrix and net network...")
+  message("")
 
   net3 <- dplyr::distinct(net2, G1, G2, .keep_all = TRUE)
-  cat(paste0("+++ ", nrow(net3), " edges in net network...\n"))
-  cat("\n")
+  checkNonEmpty(nrow(net3), "PPI edges", "Try lowering 'min.combined.score'.")
+  message("+++ ", nrow(net3), " edges in net network...")
+  message("")
 
-  cat("+++ Calculating background network using reference samples...\n")
-  cat("\n")
+  message("+++ Calculating background network using reference samples...")
+  message("")
 
   refExpr <- expr[, ref.samples]
 
@@ -210,10 +214,10 @@ SSPN2 <- function(
     ))$r
   }
 
-  net3$refCor <- sapply(1:nrow(net3), function(i) refCor[net3$G1[i], net3$G2[i]])
+  net3$refCor <- sapply(seq_len(nrow(net3)), function(i) refCor[net3$G1[i], net3$G2[i]])
 
-  cat("+++ Calculating sample-specific perturbation network for each case sample...\n")
-  cat("\n")
+  message("+++ Calculating sample-specific perturbation network for each case sample...")
+  message("")
 
   if (use_cpp) {
     # C++ batch processing
@@ -238,7 +242,7 @@ SSPN2 <- function(
     )
 
     # Adjust p-values for each sample
-    caseSSPN.list <- lapply(1:length(case.samples), function(i) {
+    caseSSPN.list <- lapply(seq_along(case.samples), function(i) {
       df <- as.data.frame(cpp_results[[i]])
 
       # Adjust p-values
@@ -259,7 +263,7 @@ SSPN2 <- function(
     tmp_fun <- function(id) {
       caseExpr <- cbind(refExpr, case = expr[, id])
       caseCor <- suppressWarnings(CorandPval(t(caseExpr), method = cor.method, p.adjust.method = p.adjust.method))$r
-      caseCor2 <- purrr::map_vec(1:nrow(net3), ~ caseCor[net3$G1[.x], net3$G2[.x]])
+      caseCor2 <- purrr::map_vec(seq_len(nrow(net3)), ~ caseCor[net3$G1[.x], net3$G2[.x]])
       casePert <- caseCor2 - net3$refCor
       caseZ <- casePert / ((1 - net3$refCor^2) / (length(ref.samples) - 1))
       caseP <- purrr::map_vec(caseZ, function(x) {
@@ -282,8 +286,8 @@ SSPN2 <- function(
   rownames(case.SSPN.Pert.matrix) <- rownames(case.SSPN.P.matrix) <-
     rownames(case.SSPN.FDR.matrix) <- paste0(net3$G1, "_", net3$G2)
 
-  cat("\n")
-  cat("+++ Done!\n")
+  message("")
+  message("+++ Done!")
   future::plan(future::sequential)
 
   return(list(

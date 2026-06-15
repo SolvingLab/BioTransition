@@ -87,10 +87,7 @@ cDNB <- function(
 
     message("+++ Performing conventional dynamic network biomarker analysis...")
     message("")
-    if (ncol(state) != 2) {
-        stop("Number of state columns must be two, the first is the sample ",
-             "names, and the second is the group or time point information!")
-    }
+    checkStateTwoCol(state)
     colnames(state) <- c("ID", "state")
     state$state <- factor(state$state, state.levels)
     state <- state[match(colnames(expr), state$ID), ]
@@ -98,6 +95,7 @@ cDNB <- function(
         expr[, state$ID[state$state == x]]
     })
     names(ddl) <- state.levels
+    checkNoEmptyState(ddl)
 
     message("+++ Calculating gene correlations for each group or time point...")
     message("")
@@ -124,16 +122,9 @@ cDNB <- function(
 
     message("+++ Performing Hierarchical clustering for all genes ...")
     message("")
+    warnLargeGeneNumber(nrow(expr))
 
-    max.size <- ifelse(max.size >= length(vl[[1]]),
-                       length(vl[[1]]) * 0.8, max.size)
-    modulel <- purrr::map(corl, \(x) {
-        dend <- stats::as.dendrogram(stats::hclust(stats::as.dist(1 - x$r)))
-        modules <- dendextend::partition_leaves(dend)
-        member_nums <- vapply(modules, length, integer(1))
-        modules <- modules[member_nums >= min.size & member_nums <= max.size]
-        return(modules)
-    })
+    modulel <- purrr::map(corl, ~ detectModules(.x$r, min.size, max.size))
 
     message("+++ Number of gene modules detected in different groups or times:")
     module_counts <- vapply(modulel, length, integer(1))
@@ -143,30 +134,8 @@ cDNB <- function(
     message("+++ Calculating module scores for each group or time point...")
     message("")
 
-    score_l <- purrr::map2(data, modulel, \(x, y) {
-        correlation <- x$r
-        v <- x$v
-        mol <- y
-        scores <- purrr::map_df(mol, \(genes_in) {
-            genes_out <- setdiff(names(v), genes_in)
-            cor_in <- mean(stats::as.dist(correlation[genes_in, genes_in]))
-            cor_out <- mean(correlation[genes_in, genes_out])
-            v_in <- mean(v[genes_in])
-            if (AddModuleSize) {
-                score <- sqrt(length(genes_in)) * v_in * cor_in / cor_out
-            } else {
-                score <- v_in * cor_in / cor_out
-            }
-            return(data.frame(s = score, v_in = v_in,
-                              r_in = cor_in, r_out = cor_out))
-        })
-        return(data.frame(
-            Module = seq_len(length(mol)),
-            Size = vapply(mol, length, integer(1)),
-            CI = scores$s,
-            V_in = scores$v_in, R_in = scores$r_in, R_out = scores$r_out
-        ))
-    })
+    score_l <- purrr::map2(data, modulel,
+        ~ scoreModules(.x$r, .x$v, .y, AddModuleSize))
 
     Candidate <- data.frame(
         State = names(score_l),
@@ -183,22 +152,8 @@ cDNB <- function(
     DNB.genes <- modulel[[critical_state]][[critical_module]]
 
     DNB.score <- purrr::map_df(data, \(x) {
-        correlation <- x$r
-        v <- x$v
-        genes_in <- DNB.genes
-        genes_out <- setdiff(names(v), genes_in)
-        cor_in <- mean(stats::as.dist(correlation[genes_in, genes_in]))
-        cor_out <- mean(correlation[genes_in, genes_out])
-        v_in <- mean(v[genes_in])
-        if (AddModuleSize) {
-            score <- sqrt(length(genes_in)) * v_in * cor_in / cor_out
-        } else {
-            score <- v_in * cor_in / cor_out
-        }
-        return(data.frame(
-            CI = score, V_in = v_in,
-            R_in = cor_in, R_out = cor_out
-        ))
+        s <- scoreModules(x$r, x$v, list(DNB.genes), AddModuleSize)
+        data.frame(CI = s$CI, V_in = s$V_in, R_in = s$R_in, R_out = s$R_out)
     })
     DNB.score <- cbind(State = state.levels, DNB.score)
 

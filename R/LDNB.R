@@ -91,17 +91,12 @@ LDNB <- function(
     message("-------------------------------------------")
 
     ## Validate input
-    if (ncol(state) != 2) {
-        stop("'state' must have exactly 2 columns", call. = FALSE)
-    }
+    checkStateTwoCol(state)
     colnames(state) <- c("ID", "state")
     state$state <- factor(state$state, levels = state.levels)
     state <- state[match(colnames(expr), state$ID), ]
 
-    if (!"ref" %in% state.levels) {
-        stop("state.levels must include 'ref' for reference samples",
-             call. = FALSE)
-    }
+    checkRefState(state.levels)
 
     ref.samples <- state$ID[state$state == "ref"]
 
@@ -191,6 +186,7 @@ LDNB <- function(
     list(
         state.GI = state.GI,
         DNB.genes = DNB.genes,
+        DNB.score = state.GI,
         Gene.LI = NULL,
         case.GI = case.GI,
         case.LI.list = case.LI.list,
