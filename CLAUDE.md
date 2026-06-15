@@ -147,12 +147,12 @@ R CMD build . && R CMD check BioTransition_2.0.0.tar.gz --as-cran
 
 ## 7. 已知体验债
 
-**v2.1.0 已清（勿回退）：** nCores 小核机变负数 → `max(1, cores-1)`；全方法进度 `cat()` → `message()`（可被 `suppressMessages()` 静默）；`1:n` → `seq_len/seq_along`；空态 / 缺 `ref` / 空 PPI 统一走 `validateInput` 友好报错；大基因数聚类栈溢出 → 可操作提示；CI 统一 |PCC| 口径；cDNB/tDNB 评分向量化提速 ~19×；删除低效死代码 `fast_module_score_cpp`；TOM 重写为 Zhang & Horvath 标准 + 分母守护 / [0,1] clamp / 单位自重叠。
+**v2.1.0 已清（勿回退）：** nCores 小核机变负数 → `max(1, cores-1)`；全方法进度 `cat()` → `message()`（可被 `suppressMessages()` 静默）；`1:n` → `seq_len/seq_along`；空态 / 缺 `ref` / 空 PPI 统一走 `validateInput` 友好报错；大基因数聚类栈溢出 → 可操作提示；CI 统一 |PCC| 口径；cDNB/tDNB 评分向量化提速 ~19×；删除低效死代码 `fast_module_score_cpp`；TOM 重写为 Zhang & Horvath 标准 + 分母守护 / [0,1] clamp / 单位自重叠；SSPN1/2 数字 `ref.samples` 的 C++ segfault 修复；SSPN 的 C++ Z 公式去除多余 `sqrt`、对齐 R + SSN 原论文；`fast_cor_pval_cpp` 改用 t 分布（与 `CorandPval` 一致）。
 
-**仍待办（多涉及数值，须作者拍板后再动）：**
-- **SSPN 的 C++ Z 公式多了 `sqrt`**：`fast_sspn_batch` 用 `z = pert/sqrt(se)`，R 路径用 `z = pert/se`（`se=(1-r²)/(n-1)`）——后者才是 SSN 原论文（Liu 2016）口径。C++ 偏离，改它会改变 SSPN/LDNB 的 p 值，需作者确认后对齐 R。
-- **LDNB 边方向 `rbind`**：把 (A,B) 与翻转的 (B,A) `rbind`，若上游已含双向边会重复计数——需核对语义。
-- **`fast_cor_pval_cpp` 的 p 值用正态近似**（非 t 分布），小样本与 `CorandPval` 不一致；当前只 SSPN 取其 `$r`（数值等价、p 未被消费），安全，但勿在小样本场景取它的 p。
+**仍待办：**
+- **内置 PPI 数据 ~101Mb**（`data/`）触发 R CMD check 的 size NOTE，Bioconductor 可能介意；长期可考虑挪到 ExperimentHub。这是目前唯一已知的非阻塞项。
+
+已核实非 bug：**LDNB 的 `rbind`** 把 (A,B) 与翻转的 (B,A) 合并，是把 `SSPN1` 输出的单向无向边（经 `sort + distinct` 去重）对称化，供下游 `split(V2, V1)` 建对称邻接表——必要且正确，不是双计数。
 
 无编号 TODO 不留在代码里：今天删、今天做，或开 issue 编号。
 

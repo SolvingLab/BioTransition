@@ -34,6 +34,12 @@
   Zhang & Horvath form with a guarded denominator, clamping to `[0, 1]` and
   unit self-overlap; numerical results for `tDNB()` are unchanged.
 * Removed the unused, inefficient `fast_module_score_cpp` C++ kernel.
+* Fixed a crash in `SSPN1()`/`SSPN2()` when `ref.samples` was passed as
+  numeric indices.
+* Aligned the C++ fast paths with the R implementations and original
+  references: the SSPN Z-score divides by `(1 - r^2)/(n - 1)` (without the
+  spurious square root), and `fast_cor_pval_cpp` uses the Student t
+  distribution rather than a normal approximation.
 
 # BioTransition 2.0.0
 

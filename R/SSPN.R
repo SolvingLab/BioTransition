@@ -30,11 +30,13 @@ SSPN1 <- function(
   use_cpp <- cor.method == "pearson" &&
     exists("fast_sspn_batch") &&
     is.function(fast_sspn_batch)
+  # Normalise ref.samples to column names so numeric indices and names behave
+  # identically downstream (match() on numeric indices would yield NA indices
+  # and crash the C++ batch routine).
   if (is.numeric(ref.samples)) {
-    case.samples <- colnames(expr)[-ref.samples]
-  } else {
-    case.samples <- colnames(expr)[!colnames(expr) %in% ref.samples]
+    ref.samples <- colnames(expr)[ref.samples]
   }
+  case.samples <- setdiff(colnames(expr), ref.samples)
   checkNonEmpty(length(case.samples), "case samples", "All columns are in 'ref.samples'.")
 
   ppi2 <- ppi[ppi$G1 %in% rownames(expr) & ppi$G2 %in% rownames(expr) & ppi$combined_score >= min.combined.score, -3]
@@ -180,11 +182,13 @@ SSPN2 <- function(
   use_cpp <- cor.method == "pearson" &&
     exists("fast_sspn_batch") &&
     is.function(fast_sspn_batch)
+  # Normalise ref.samples to column names so numeric indices and names behave
+  # identically downstream (match() on numeric indices would yield NA indices
+  # and crash the C++ batch routine).
   if (is.numeric(ref.samples)) {
-    case.samples <- colnames(expr)[-ref.samples]
-  } else {
-    case.samples <- colnames(expr)[!colnames(expr) %in% ref.samples]
+    ref.samples <- colnames(expr)[ref.samples]
   }
+  case.samples <- setdiff(colnames(expr), ref.samples)
   checkNonEmpty(length(case.samples), "case samples", "All columns are in 'ref.samples'.")
 
   colnames(net) <- c("G1", "G2")

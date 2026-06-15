@@ -129,7 +129,9 @@ List fast_cor_pval_cpp(NumericMatrix mat, std::string method = "pearson") {
       if (std::abs(cor) < 0.9999) {
         double t_stat = cor * sqrt((n_samples - 2) / (1 - cor * cor));
         double z = std::abs(t_stat);
-        p_val = 2.0 * R::pnorm(-z, 0.0, 1.0, 1, 0);
+        // Student t distribution (df = n - 2), matching R's CorandPval; the
+        // normal approximation was inaccurate for small samples.
+        p_val = 2.0 * R::pt(-z, n_samples - 2, 1, 0);
       } else {
         p_val = 0.0;
       }
@@ -303,10 +305,13 @@ List fast_sspn_batch(NumericMatrix expr_mat,
       
       // Calculate Z score
       double ref_cor_sq = ref_cors[edge] * ref_cors[edge];
+      // SSN statistic (Liu et al. 2016): the perturbation of PCC is normalised
+      // by its standard deviation (1 - r^2)/(n - 1) -- NOT its square root --
+      // matching the R path in SSPN1/SSPN2.
       double se = (1.0 - ref_cor_sq) / (n_ref - 1);
       double z = 0.0;
       if (se > 1e-10) {
-        z = pert / sqrt(se);
+        z = pert / se;
       }
       case_z[edge] = z;
       
