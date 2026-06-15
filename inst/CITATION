@@ -7,12 +7,12 @@ bibentry(
     person("Zaoqu", "Liu", email = "liuzaoqu@163.com")
   ),
   year     = "2026",
-  note     = "R package version 2.0.0",
+  note     = "R package version 2.1.0",
   url      = "https://github.com/SolvingLab/BioTransition",
   textVersion = paste(
     "Liu Z (2026).",
     "BioTransition: Dynamic Network Biomarker Analysis for Critical Transition Detection.",
-    "R package version 2.0.0.",
+    "R package version 2.1.0.",
     "https://github.com/SolvingLab/BioTransition"
   )
 )

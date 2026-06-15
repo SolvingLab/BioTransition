@@ -88,7 +88,10 @@ The package includes curated protein-protein interaction (PPI) networks:
 
 ## Performance
 
-Core computational routines are implemented in C++ via Rcpp, providing 2–20× speedup compared to pure R implementations for correlation analysis and module scoring.
+Core routines are heavily optimised: correlation analysis and sample-specific
+network construction run in C++ via Rcpp, while module scoring in `cDNB`/`tDNB`
+uses a vectorised complement-identity formulation that is ~19× faster than a
+naive per-module loop on large inputs.
 
 ## References
 
@@ -108,7 +111,7 @@ If you use BioTransition in your research, please cite:
 
 ```
 Liu Z (2026). BioTransition: Dynamic Network Biomarker Analysis for Critical 
-Transition Detection. R package version 2.0.0. 
+Transition Detection. R package version 2.1.0. 
 https://github.com/SolvingLab/BioTransition
 ```
 
